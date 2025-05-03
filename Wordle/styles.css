@@ -1,0 +1,101 @@
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #121213;
+    color: #ffffff;
+}
+
+.wordle-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.wordle-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 60px);
+    grid-template-rows: repeat(6, 60px);
+    gap: 5px;
+    margin-bottom: 20px;
+}
+
+.wordle-grid div {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 2px solid #3a3a3c;
+    font-size: 2em;
+    text-transform: uppercase;
+}
+
+.keyboard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.keyboard-row {
+    display: flex;
+    margin-bottom: 10px;
+}
+
+.key {
+    margin: 2px;
+    padding: 10px;
+    font-size: 1.2em;
+    border: 1px solid #3a3a3c;
+    background-color: #818384;
+    color: #ffffff;
+    cursor: pointer;
+    text-align: center;
+}
+
+.key:hover {
+    background-color: #565758;
+}
+
+.enter-key {
+    width: 80px; /* Increased width */
+    font-size: 1em; /* Adjusted font size */
+}
+
+.backspace-key {
+    width: 60px;
+}
+
+/* Updated dark grey background color */
+.key.dark-grey {
+    background-color: #333333;
+}
+
+/* Updated dark yellow background color */
+.key.dark-yellow {
+    background-color: #cca300;
+}
+
+/* Message container styles */
+.message-container {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #333333;
+    color: #ffffff;
+    padding: 10px 20px;
+    border-radius: 5px;
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+    pointer-events: none;
+    z-index: 1000; /* Ensure it appears above other elements */
+}
+
+.message-container.show {
+    opacity: 1;
+    pointer-events: auto;
+}
