@@ -43,7 +43,7 @@ function handleKeyPress(key) {
         return;
     }
 
-    if (isGameOver && key === 'ENTER') {
+    if (isGameOver) {
         return; // Ignore input if the game is over
     }
 
