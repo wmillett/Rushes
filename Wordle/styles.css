@@ -9,6 +9,14 @@ body {
     color: #ffffff;
 }
 
+.title {
+    font-size: 3em;
+    margin-bottom: 20px;
+    color: #ffffff;
+    text-align: center;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
 .wordle-container {
     display: flex;
     flex-direction: column;

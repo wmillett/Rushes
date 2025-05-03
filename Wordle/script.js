@@ -20,8 +20,7 @@ fetch('words.txt')
     .then(response => response.text())
     .then(data => {
         validWords = data.split('\n').filter(word => word.length === 5);
-        targetWord = validWords[Math.floor(Math.random() * validWords.length)].toUpperCase();
-        console.log('Target word:', targetWord); // For debugging purposes
+        resetGame();
     })
     .catch(error => console.error('Error loading words.txt:', error));
 
@@ -39,9 +38,15 @@ document.addEventListener('keydown', (event) => {
 });
 
 function handleKeyPress(key) {
-    if (isGameOver) {
+    if (key === 'ESCAPE') {
+        resetGame();
+        return;
+    }
+
+    if (isGameOver && key === 'ENTER') {
         return; // Ignore input if the game is over
     }
+
     if (key === 'ENTER') {
         submitGuess();
     } else if (key === 'BACKSPACE') {
@@ -158,4 +163,32 @@ function showMessage(message) {
     setTimeout(() => {
         messageContainer.classList.remove('show');
     }, 3000); // Hide the message after 3 seconds
+}
+
+function resetGame() {
+    currentRow = 0;
+    currentCol = 0;
+    isGameOver = false;
+    targetWord = validWords[Math.floor(Math.random() * validWords.length)].toUpperCase();
+    console.log('New target word:', targetWord); // For debugging purposes
+
+    // Clear the Wordle grid
+    for (let i = 0; i < 6; i++) {
+        for (let j = 0; j < 5; j++) {
+            const cell = wordleGrid.children[i * 5 + j];
+            cell.textContent = '';
+            cell.style.backgroundColor = '';
+        }
+    }
+
+    // Reset keyboard colors
+    const keyboardKeys = document.querySelectorAll('.key');
+    keyboardKeys.forEach(key => {
+        key.style.backgroundColor = '';
+        key.classList.remove('dark-grey', 'dark-yellow');
+    });
+
+    // Clear any messages
+    messageContainer.textContent = '';
+    messageContainer.classList.remove('show');
 }
