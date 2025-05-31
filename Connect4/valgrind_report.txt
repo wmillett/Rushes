@@ -19,3 +19,37 @@
 ==2141827==  Uninitialised value was created by a stack allocation
 ==2141827==    at 0x402FF5: get_next_line (in /home/wmillett/Projects/Rushes/Connect4/connect4)
 ==2141827== 
+==2141827== 
+==2141827== Process terminating with default action of signal 1 (SIGHUP)
+==2141827==    at 0x4985885: write (write.c:26)
+==2141827==    by 0x403304: ft_putchar_fd (in /home/wmillett/Projects/Rushes/Connect4/connect4)
+==2141827==    by 0x402BD2: ft_putchar (in /home/wmillett/Projects/Rushes/Connect4/connect4)
+==2141827==    by 0x402647: ft_printf (in /home/wmillett/Projects/Rushes/Connect4/connect4)
+==2141827==    by 0x4012A4: getValidColumn (in /home/wmillett/Projects/Rushes/Connect4/connect4)
+==2141827==    by 0x401731: main (in /home/wmillett/Projects/Rushes/Connect4/connect4)
+==2141827== 
+==2141827== HEAP SUMMARY:
+==2141827==     in use at exit: 216 bytes in 7 blocks
+==2141827==   total heap usage: 4,253,170 allocs, 4,253,163 frees, 93,569,636 bytes allocated
+==2141827== 
+==2141827== 48 bytes in 1 blocks are still reachable in loss record 1 of 2
+==2141827==    at 0x4848899: malloc (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2141827==    by 0x402214: ft_calloc (in /home/wmillett/Projects/Rushes/Connect4/connect4)
+==2141827==    by 0x401943: initBoard (in /home/wmillett/Projects/Rushes/Connect4/connect4)
+==2141827==    by 0x401607: main (in /home/wmillett/Projects/Rushes/Connect4/connect4)
+==2141827== 
+==2141827== 168 bytes in 6 blocks are still reachable in loss record 2 of 2
+==2141827==    at 0x4848899: malloc (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2141827==    by 0x402214: ft_calloc (in /home/wmillett/Projects/Rushes/Connect4/connect4)
+==2141827==    by 0x40196E: initBoard (in /home/wmillett/Projects/Rushes/Connect4/connect4)
+==2141827==    by 0x401607: main (in /home/wmillett/Projects/Rushes/Connect4/connect4)
+==2141827== 
+==2141827== LEAK SUMMARY:
+==2141827==    definitely lost: 0 bytes in 0 blocks
+==2141827==    indirectly lost: 0 bytes in 0 blocks
+==2141827==      possibly lost: 0 bytes in 0 blocks
+==2141827==    still reachable: 216 bytes in 7 blocks
+==2141827==         suppressed: 0 bytes in 0 blocks
+==2141827== 
+==2141827== For lists of detected and suppressed errors, rerun with: -s
+==2141827== ERROR SUMMARY: 6 errors from 2 contexts (suppressed: 0 from 0)
