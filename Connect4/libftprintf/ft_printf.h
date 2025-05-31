@@ -14,6 +14,9 @@
 # define FT_PRINTF_H
 # include "libft/libft.h"
 # include <stdarg.h>
+# include <stdlib.h>
+# include <unistd.h>
+# include "getnextline/get_next_line.h"
 
 # define ERROR -1
 
@@ -36,5 +39,8 @@ int	ft_putnbr(int n);
 size_t	ft_strcspn(const char *s1, const char *s2);
 int		ft_isspace(int c);
 long	ft_strtol(const char *str, char **endptr, int base);
+
+char		*get_next_line(int fd);
+void		cleanup_get_next_line(void);
 
 #endif

@@ -5,9 +5,9 @@
 void initBoard(GameBoard *board, int rows, int cols) {
     board->rows = rows;
     board->cols = cols;
-    board->grid = (int **)ft_calloc(rows, sizeof(int *));
+    board->grid = (int **)ft_calloc(rows, PTR_SIZE);
     for (int i = 0; i < rows; i++) {
-        board->grid[i] = (int *)ft_calloc(cols, sizeof(int));
+        board->grid[i] = (int *)ft_calloc(cols, INT_SIZE);
     }
 }
 

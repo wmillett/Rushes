@@ -25,6 +25,8 @@ SRC = ft_printf.c\
 		ft_strcspn.c\
 		ft_isspace.c\
 		ft_strtol.c\
+		getnextline/get_next_line.c\
+		getnextline/get_next_line_utils.c
 		
 OBJ = $(SRC:%.c=%.o)
 RM = rm -f

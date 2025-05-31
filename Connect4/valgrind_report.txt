@@ -1,0 +1,21 @@
+==2141827== Memcheck, a memory error detector
+==2141827== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==2141827== Using Valgrind-3.18.1 and LibVEX; rerun with -h for copyright info
+==2141827== Command: ./connect4 6 7
+==2141827== 
+==2141827== Conditional jump or move depends on uninitialised value(s)
+==2141827==    at 0x4030F5: get_next_line (in /home/wmillett/Projects/Rushes/Connect4/connect4)
+==2141827==    by 0x4011B5: ft_getline_input (in /home/wmillett/Projects/Rushes/Connect4/connect4)
+==2141827==    by 0x4012B2: getValidColumn (in /home/wmillett/Projects/Rushes/Connect4/connect4)
+==2141827==    by 0x401731: main (in /home/wmillett/Projects/Rushes/Connect4/connect4)
+==2141827==  Uninitialised value was created by a stack allocation
+==2141827==    at 0x402FF5: get_next_line (in /home/wmillett/Projects/Rushes/Connect4/connect4)
+==2141827== 
+==2141827== Conditional jump or move depends on uninitialised value(s)
+==2141827==    at 0x4030FC: get_next_line (in /home/wmillett/Projects/Rushes/Connect4/connect4)
+==2141827==    by 0x4011B5: ft_getline_input (in /home/wmillett/Projects/Rushes/Connect4/connect4)
+==2141827==    by 0x4012B2: getValidColumn (in /home/wmillett/Projects/Rushes/Connect4/connect4)
+==2141827==    by 0x401731: main (in /home/wmillett/Projects/Rushes/Connect4/connect4)
+==2141827==  Uninitialised value was created by a stack allocation
+==2141827==    at 0x402FF5: get_next_line (in /home/wmillett/Projects/Rushes/Connect4/connect4)
+==2141827== 

@@ -3,23 +3,57 @@
 #include <stdlib.h>
 #include <time.h>
 
+// Custom input function using get_next_line (replaces fgets + stdin)
+int ft_getline_input(char *buffer, int max_size) {
+    char *line;
+    int len;
+    int i;
+    
+    // Read a line from stdin (file descriptor 0) using get_next_line
+    line = get_next_line(0);
+    if (!line) {
+        return -1; // Error or EOF
+    }
+    
+    // Calculate length and copy to buffer
+    len = ft_strlen(line);
+    
+    // Remove newline if present
+    if (len > 0 && line[len - 1] == '\n') {
+        len--;
+    }
+    
+    // Ensure we don't exceed buffer size
+    if (len >= max_size) {
+        len = max_size - 1;
+    }
+    
+    // Copy the line to buffer
+    for (i = 0; i < len; i++) {
+        buffer[i] = line[i];
+    }
+    buffer[len] = '\0';
+    
+    // Free the line allocated by get_next_line
+    free(line);
+    
+    return len;
+}
+
 // Function to validate and parse column input
 int getValidColumn(int maxCol) {
-    char input[100];
+    char input[INPUT_BUFFER_SIZE];
     char *endptr;
     long col;
     
     while (1) {
         ft_printf("Enter column (0-%d): ", maxCol - 1);
         
-        // Read entire line
-        if (fgets(input, sizeof(input), stdin) == NULL) {
+        // Read entire line using custom function
+        if (ft_getline_input(input, INPUT_BUFFER_SIZE) < 0) {
             ft_printf("Error reading input. Please try again.\n");
             continue;
         }
-        
-        // Remove newline character
-        input[ft_strcspn(input, "\n")] = 0;
         
         // Check for empty input
         if (ft_strlen(input) == 0) {
@@ -173,5 +207,6 @@ int main(int argc, char *argv[]) {
     }
 
     freeBoard(&board);
+    cleanup_get_next_line();  // Clean up get_next_line static memory
     return 0;
 }
