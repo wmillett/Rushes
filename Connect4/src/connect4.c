@@ -19,12 +19,44 @@ void freeBoard(GameBoard *board) {
 }
 
 void displayBoard(GameBoard *board) {
-    for (int i = 0; i < board->rows; i++) {
-        for (int j = 0; j < board->cols; j++) {
-            printf("%d ", board->grid[i][j]);
-        }
-        printf("\n");
+    // Print column numbers header
+    printf("  ");
+    for (int j = 0; j < board->cols; j++) {
+        printf("%d ", j);
     }
+    printf("\n");
+    
+    // Print top border
+    printf("  ");
+    for (int j = 0; j < board->cols; j++) {
+        printf("--");
+    }
+    printf("-\n");
+    
+    // Print board with colors
+    for (int i = 0; i < board->rows; i++) {
+        printf("| ");
+        for (int j = 0; j < board->cols; j++) {
+            if (board->grid[i][j] == PLAYER) {
+                // Red for Player 1
+                printf("\033[31m●\033[0m ");
+            } else if (board->grid[i][j] == AI) {
+                // Yellow for AI/Player 2
+                printf("\033[33m●\033[0m ");
+            } else {
+                // Empty space
+                printf("· ");
+            }
+        }
+        printf("|\n");
+    }
+    
+    // Print bottom border
+    printf("  ");
+    for (int j = 0; j < board->cols; j++) {
+        printf("--");
+    }
+    printf("-\n");
 }
 
 int isValidMove(GameBoard *board, int col) {
@@ -41,8 +73,55 @@ void makeMove(GameBoard *board, int col, int player) {
 }
 
 int checkWin(GameBoard *board, int player) {
-    // Implement win checking logic
-    return 0; // Placeholder
+    // Check horizontal wins
+    for (int row = 0; row < board->rows; row++) {
+        for (int col = 0; col < board->cols - 3; col++) {
+            if (board->grid[row][col] == player &&
+                board->grid[row][col + 1] == player &&
+                board->grid[row][col + 2] == player &&
+                board->grid[row][col + 3] == player) {
+                return 1;
+            }
+        }
+    }
+    
+    // Check vertical wins
+    for (int col = 0; col < board->cols; col++) {
+        for (int row = 0; row < board->rows - 3; row++) {
+            if (board->grid[row][col] == player &&
+                board->grid[row + 1][col] == player &&
+                board->grid[row + 2][col] == player &&
+                board->grid[row + 3][col] == player) {
+                return 1;
+            }
+        }
+    }
+    
+    // Check positive diagonal wins (bottom-left to top-right)
+    for (int row = 3; row < board->rows; row++) {
+        for (int col = 0; col < board->cols - 3; col++) {
+            if (board->grid[row][col] == player &&
+                board->grid[row - 1][col + 1] == player &&
+                board->grid[row - 2][col + 2] == player &&
+                board->grid[row - 3][col + 3] == player) {
+                return 1;
+            }
+        }
+    }
+    
+    // Check negative diagonal wins (top-left to bottom-right)
+    for (int row = 0; row < board->rows - 3; row++) {
+        for (int col = 0; col < board->cols - 3; col++) {
+            if (board->grid[row][col] == player &&
+                board->grid[row + 1][col + 1] == player &&
+                board->grid[row + 2][col + 2] == player &&
+                board->grid[row + 3][col + 3] == player) {
+                return 1;
+            }
+        }
+    }
+    
+    return 0; // No win found
 }
 
 int isBoardFull(GameBoard *board) {
