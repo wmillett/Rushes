@@ -14,6 +14,7 @@
 NAME = libftprintf.a
 LIBFT = libft.a
 LPATH = libft/
+GPATH = getnextline/
 SRC = ft_printf.c\
 		ft_putadr.c\
 		ft_puthex.c\
@@ -45,10 +46,9 @@ $(LPATH)$(LIBFT):
 clean:
 	$(RM) *.o
 	$(RM) $(LPATH)*.o
-fclean:
-	$(RM) *.o
+	$(RM) $(GPATH)*.o
+fclean: clean
 	$(RM) $(NAME)
-	$(RM) $(LPATH)*.o
 	$(RM) $(LPATH)$(LIBFT)
 
 re: fclean all

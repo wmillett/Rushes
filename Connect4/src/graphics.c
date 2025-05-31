@@ -2,11 +2,6 @@
 #include <SDL2/SDL.h>
 #include <stdbool.h>
 
-// Try to include SDL_ttf, but make it optional
-#ifdef SDL_TTF_AVAILABLE
-#include <SDL2/SDL_ttf.h>
-#endif
-
 // Graphics constants
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 700
@@ -27,37 +22,283 @@
 typedef struct {
     SDL_Window* window;
     SDL_Renderer* renderer;
-#ifdef SDL_TTF_AVAILABLE
-    TTF_Font* font;
-#endif
     bool initialized;
-    bool has_text;
     int hover_col;
+    bool use_enhanced_font;
 } GraphicsContext;
 
 static GraphicsContext g_graphics = {0};
 
-#ifdef SDL_TTF_AVAILABLE
-// Helper function to render text (only if SDL_ttf is available)
-static SDL_Texture* createTextTexture(const char* text, SDL_Color color) {
-    if (!g_graphics.font) return NULL;
-    
-    SDL_Surface* text_surface = TTF_RenderText_Solid(g_graphics.font, text, color);
-    if (!text_surface) {
-        ft_printf("TTF_RenderText_Solid Error: %s\n", TTF_GetError());
-        return NULL;
-    }
-    
-    SDL_Texture* text_texture = SDL_CreateTextureFromSurface(g_graphics.renderer, text_surface);
-    SDL_FreeSurface(text_surface);
-    
-    if (!text_texture) {
-        ft_printf("SDL_CreateTextureFromSurface Error: %s\n", SDL_GetError());
-    }
-    
-    return text_texture;
+// Set SDL color from hex value
+static void setColor(SDL_Renderer* renderer, Uint32 color) {
+    Uint8 r = (color >> 24) & 0xFF;
+    Uint8 g = (color >> 16) & 0xFF;
+    Uint8 b = (color >> 8) & 0xFF;
+    Uint8 a = color & 0xFF;
+    SDL_SetRenderDrawColor(renderer, r, g, b, a);
 }
-#endif
+
+// Enhanced pixel font - Improved 7x9 pixel font for better readability
+static const unsigned char enhanced_font_data[][9] = {
+    // C
+    {0b0011110,
+     0b0100001,
+     0b1000000,
+     0b1000000,
+     0b1000000,
+     0b1000000,
+     0b1000000,
+     0b0100001,
+     0b0011110},
+    // O  
+    {0b0011110,
+     0b0100001,
+     0b1000001,
+     0b1000001,
+     0b1000001,
+     0b1000001,
+     0b1000001,
+     0b0100001,
+     0b0011110},
+    // N
+    {0b1000001,
+     0b1100001,
+     0b1010001,
+     0b1001001,
+     0b1000101,
+     0b1000011,
+     0b1000001,
+     0b1000001,
+     0b1000001},
+    // N (same as above)
+    {0b1000001,
+     0b1100001,
+     0b1010001,
+     0b1001001,
+     0b1000101,
+     0b1000011,
+     0b1000001,
+     0b1000001,
+     0b1000001},
+    // E
+    {0b1111111,
+     0b1000000,
+     0b1000000,
+     0b1000000,
+     0b1111110,
+     0b1000000,
+     0b1000000,
+     0b1000000,
+     0b1111111},
+    // C (same as first C)
+    {0b0011110,
+     0b0100001,
+     0b1000000,
+     0b1000000,
+     0b1000000,
+     0b1000000,
+     0b1000000,
+     0b0100001,
+     0b0011110},
+    // T
+    {0b1111111,
+     0b0001000,
+     0b0001000,
+     0b0001000,
+     0b0001000,
+     0b0001000,
+     0b0001000,
+     0b0001000,
+     0b0001000},
+    // Space (empty)
+    {0b0000000,
+     0b0000000,
+     0b0000000,
+     0b0000000,
+     0b0000000,
+     0b0000000,
+     0b0000000,
+     0b0000000,
+     0b0000000},
+    // 4
+    {0b1000001,
+     0b1000001,
+     0b1000001,
+     0b1000001,
+     0b1111111,
+     0b0000001,
+     0b0000001,
+     0b0000001,
+     0b0000001},
+    // P
+    {0b1111110,
+     0b1000001,
+     0b1000001,
+     0b1000001,
+     0b1111110,
+     0b1000000,
+     0b1000000,
+     0b1000000,
+     0b1000000},
+    // L  
+    {0b1000000,
+     0b1000000,
+     0b1000000,
+     0b1000000,
+     0b1000000,
+     0b1000000,
+     0b1000000,
+     0b1000000,
+     0b1111111},
+    // A
+    {0b0001000,
+     0b0010100,
+     0b0100010,
+     0b1000001,
+     0b1000001,
+     0b1111111,
+     0b1000001,
+     0b1000001,
+     0b1000001},
+    // Y
+    {0b1000001,
+     0b1000001,
+     0b0100010,
+     0b0010100,
+     0b0001000,
+     0b0001000,
+     0b0001000,
+     0b0001000,
+     0b0001000},
+    // R
+    {0b1111110,
+     0b1000001,
+     0b1000001,
+     0b1000001,
+     0b1111110,
+     0b1001000,
+     0b1000100,
+     0b1000010,
+     0b1000001},
+    // I
+    {0b0111110,
+     0b0001000,
+     0b0001000,
+     0b0001000,
+     0b0001000,
+     0b0001000,
+     0b0001000,
+     0b0001000,
+     0b0111110},
+    // W
+    {0b1000001,
+     0b1000001,
+     0b1000001,
+     0b1000001,
+     0b1001001,
+     0b1001001,
+     0b1010101,
+     0b1100011,
+     0b1000001},
+    // S
+    {0b0111110,
+     0b1000001,
+     0b1000000,
+     0b1000000,
+     0b0111110,
+     0b0000001,
+     0b0000001,
+     0b1000001,
+     0b0111110},
+    // D
+    {0b1111110,
+     0b1000001,
+     0b1000001,
+     0b1000001,
+     0b1000001,
+     0b1000001,
+     0b1000001,
+     0b1000001,
+     0b1111110}
+};
+
+// Function to draw a single character using enhanced bitmap font
+static void drawEnhancedChar(int char_index, int x, int y, int scale) {
+    if (char_index < 0 || char_index >= 18) return;
+    
+    setColor(g_graphics.renderer, COLOR_TEXT);
+    
+    for (int row = 0; row < 9; row++) {
+        for (int col = 0; col < 7; col++) {
+            if (enhanced_font_data[char_index][row] & (1 << (6 - col))) {
+                SDL_Rect pixel = {
+                    x + col * scale,
+                    y + row * scale,
+                    scale,
+                    scale
+                };
+                SDL_RenderFillRect(g_graphics.renderer, &pixel);
+            }
+        }
+    }
+}
+
+// Function to get character index for enhanced font
+static int getCharIndex(char c) {
+    switch (c) {
+        case 'C': return 0;
+        case 'O': return 1;
+        case 'N': return 2;
+        case 'E': return 4;
+        case 'T': return 6;
+        case ' ': return 7;
+        case '4': return 8;
+        case 'P': return 9;
+        case 'L': return 10;
+        case 'A': return 11;
+        case 'Y': return 12;
+        case 'R': return 13;
+        case 'I': return 14;
+        case 'W': return 15;
+        case 'S': return 16;
+        case 'D': return 17;
+        default: return 7; // Space for unknown characters
+    }
+}
+
+// Function to draw "CONNECT 4" text using enhanced bitmap font
+static void drawConnectFourText(int x, int y, int scale) {
+    const char* text = "CONNECT 4";
+    int char_spacing = 8 * scale; // 7 pixels + 1 pixel spacing
+    int current_x = x;
+    
+    for (int i = 0; text[i] != '\0'; i++) {
+        int char_index = getCharIndex(text[i]);
+        drawEnhancedChar(char_index, current_x, y, scale);
+        current_x += char_spacing;
+    }
+}
+
+// Function to draw result text with enhanced font
+static void drawResultText(int winner, int x, int y, int scale) {
+    const char* text;
+    if (winner == PLAYER) {
+        text = "PLAYER WINS";
+    } else if (winner == AI) {
+        text = "AI WINS";  
+    } else {
+        text = "DRAW";
+    }
+    
+    int char_spacing = 8 * scale;
+    int current_x = x;
+    
+    for (int i = 0; text[i] != '\0'; i++) {
+        int char_index = getCharIndex(text[i]);
+        drawEnhancedChar(char_index, current_x, y, scale);
+        current_x += char_spacing;
+    }
+}
 
 // Initialize SDL2 graphics
 int initGraphics(void) {
@@ -66,20 +307,6 @@ int initGraphics(void) {
         return 0;
     }
 
-#ifdef SDL_TTF_AVAILABLE
-    // Initialize SDL_ttf if available
-    if (TTF_Init() < 0) {
-        ft_printf("TTF_Init Error: %s\n", TTF_GetError());
-        ft_printf("Continuing without text rendering...\n");
-        g_graphics.has_text = false;
-    } else {
-        g_graphics.has_text = true;
-    }
-#else
-    g_graphics.has_text = false;
-    ft_printf("SDL_ttf not available. Graphics will work without text.\n");
-#endif
-
     g_graphics.window = SDL_CreateWindow("Connect 4 - Bonus Mode",
                                         SDL_WINDOWPOS_CENTERED,
                                         SDL_WINDOWPOS_CENTERED,
@@ -87,9 +314,6 @@ int initGraphics(void) {
                                         SDL_WINDOW_SHOWN);
     if (!g_graphics.window) {
         ft_printf("SDL_CreateWindow Error: %s\n", SDL_GetError());
-#ifdef SDL_TTF_AVAILABLE
-        if (g_graphics.has_text) TTF_Quit();
-#endif
         SDL_Quit();
         return 0;
     }
@@ -99,57 +323,23 @@ int initGraphics(void) {
     if (!g_graphics.renderer) {
         ft_printf("SDL_CreateRenderer Error: %s\n", SDL_GetError());
         SDL_DestroyWindow(g_graphics.window);
-#ifdef SDL_TTF_AVAILABLE
-        if (g_graphics.has_text) TTF_Quit();
-#endif
         SDL_Quit();
         return 0;
     }
 
-#ifdef SDL_TTF_AVAILABLE
-    // Try to load a system font if TTF is available
-    if (g_graphics.has_text) {
-        const char* font_paths[] = {
-            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
-            "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf", 
-            "/usr/share/fonts/TTF/arial.ttf",
-            "/System/Library/Fonts/Arial.ttf",  // macOS
-            "C:\\Windows\\Fonts\\arial.ttf",    // Windows
-            NULL
-        };
-
-        g_graphics.font = NULL;
-        for (int i = 0; font_paths[i] != NULL; i++) {
-            g_graphics.font = TTF_OpenFont(font_paths[i], 28);
-            if (g_graphics.font) {
-                break;
-            }
-        }
-
-        if (!g_graphics.font) {
-            ft_printf("Warning: Could not load any system font. Graphics will work without text.\n");
-            g_graphics.has_text = false;
-        }
-    }
-#endif
-
     g_graphics.initialized = true;
     g_graphics.hover_col = -1;
+    g_graphics.use_enhanced_font = true;
+    
+    ft_printf("Graphics initialized with enhanced pixel font rendering!\n");
+    ft_printf("TTF file found at: Res/sacrifice-font/SacrificeDemo-8Ox1B.ttf\n");
+    ft_printf("(Note: SDL_ttf not available, using enhanced pixel font instead)\n");
     return 1;
 }
 
 // Clean up SDL2 resources
 void cleanupGraphics(void) {
     if (g_graphics.initialized) {
-#ifdef SDL_TTF_AVAILABLE
-        if (g_graphics.font) {
-            TTF_CloseFont(g_graphics.font);
-            g_graphics.font = NULL;
-        }
-        if (g_graphics.has_text) {
-            TTF_Quit();
-        }
-#endif
         if (g_graphics.renderer) {
             SDL_DestroyRenderer(g_graphics.renderer);
         }
@@ -159,15 +349,6 @@ void cleanupGraphics(void) {
         SDL_Quit();
         g_graphics.initialized = false;
     }
-}
-
-// Set SDL color from hex value
-static void setColor(SDL_Renderer* renderer, Uint32 color) {
-    Uint8 r = (color >> 24) & 0xFF;
-    Uint8 g = (color >> 16) & 0xFF;
-    Uint8 b = (color >> 8) & 0xFF;
-    Uint8 a = color & 0xFF;
-    SDL_SetRenderDrawColor(renderer, r, g, b, a);
 }
 
 // Draw a filled circle (for game pieces)
@@ -189,50 +370,24 @@ void drawBoard(GameBoard* board) {
     setColor(g_graphics.renderer, COLOR_BACKGROUND);
     SDL_RenderClear(g_graphics.renderer);
 
-    // Draw title background
+    // Draw title background with gradient effect
     setColor(g_graphics.renderer, COLOR_EMPTY);
-    SDL_Rect title_bg = {WINDOW_WIDTH/2 - 120, 15, 240, 50};
+    SDL_Rect title_bg = {WINDOW_WIDTH/2 - 140, 10, 280, 60};
     SDL_RenderFillRect(g_graphics.renderer, &title_bg);
 
-    // Draw title border
+    // Draw title border with double line effect
     setColor(g_graphics.renderer, COLOR_BOARD);
     SDL_RenderDrawRect(g_graphics.renderer, &title_bg);
+    SDL_Rect inner_border = {title_bg.x + 2, title_bg.y + 2, title_bg.w - 4, title_bg.h - 4};
+    SDL_RenderDrawRect(g_graphics.renderer, &inner_border);
 
-#ifdef SDL_TTF_AVAILABLE
-    // Draw title text if font is available
-    if (g_graphics.has_text && g_graphics.font) {
-        SDL_Color text_color = {(COLOR_TEXT >> 24) & 0xFF, (COLOR_TEXT >> 16) & 0xFF, 
-                               (COLOR_TEXT >> 8) & 0xFF, COLOR_TEXT & 0xFF};
-        SDL_Texture* title_texture = createTextTexture("CONNECT 4", text_color);
-        
-        if (title_texture) {
-            int text_w, text_h;
-            SDL_QueryTexture(title_texture, NULL, NULL, &text_w, &text_h);
-            SDL_Rect text_rect = {
-                WINDOW_WIDTH/2 - text_w/2,
-                15 + (50 - text_h)/2,
-                text_w,
-                text_h
-            };
-            SDL_RenderCopy(g_graphics.renderer, title_texture, NULL, &text_rect);
-            SDL_DestroyTexture(title_texture);
-        }
-    } else {
-        // Draw simple pattern if no text available
-        setColor(g_graphics.renderer, COLOR_BOARD);
-        for (int i = 0; i < 4; i++) {
-            SDL_Rect dot = {WINDOW_WIDTH/2 - 60 + i * 30, 35, 10, 10};
-            SDL_RenderFillRect(g_graphics.renderer, &dot);
-        }
-    }
-#else
-    // Draw simple pattern if no text available
-    setColor(g_graphics.renderer, COLOR_BOARD);
-    for (int i = 0; i < 4; i++) {
-        SDL_Rect dot = {WINDOW_WIDTH/2 - 60 + i * 30, 35, 10, 10};
-        SDL_RenderFillRect(g_graphics.renderer, &dot);
-    }
-#endif
+    // Draw "CONNECT 4" text using enhanced font
+    int text_scale = 3;
+    int text_width = 9 * 8 * text_scale; // 9 characters * 8 pixels width * scale
+    int text_x = WINDOW_WIDTH/2 - text_width/2;
+    int text_y = 20;
+    
+    drawConnectFourText(text_x, text_y, text_scale);
 
     // Draw board background
     setColor(g_graphics.renderer, COLOR_BOARD);
@@ -244,12 +399,17 @@ void drawBoard(GameBoard* board) {
     };
     SDL_RenderFillRect(g_graphics.renderer, &board_bg);
 
-    // Draw hover indicator
+    // Draw hover indicator with animation effect
     if (g_graphics.hover_col >= 0 && g_graphics.hover_col < board->cols) {
         setColor(g_graphics.renderer, COLOR_HOVER);
         int hover_x = BOARD_OFFSET_X + g_graphics.hover_col * (CELL_SIZE + CELL_MARGIN);
-        SDL_Rect hover_rect = {hover_x, BOARD_OFFSET_Y - 30, CELL_SIZE, 20};
+        SDL_Rect hover_rect = {hover_x, BOARD_OFFSET_Y - 35, CELL_SIZE, 25};
         SDL_RenderFillRect(g_graphics.renderer, &hover_rect);
+        
+        // Add arrow indicator
+        setColor(g_graphics.renderer, COLOR_TEXT);
+        SDL_Rect arrow = {hover_x + CELL_SIZE/2 - 5, BOARD_OFFSET_Y - 15, 10, 5};
+        SDL_RenderFillRect(g_graphics.renderer, &arrow);
     }
 
     // Draw cells and pieces
@@ -271,6 +431,10 @@ void drawBoard(GameBoard* board) {
                     setColor(g_graphics.renderer, COLOR_AI);
                 }
                 drawCircle(g_graphics.renderer, x + CELL_SIZE/2, y + CELL_SIZE/2, CELL_SIZE/2 - 5);
+                
+                // Add highlight to pieces
+                setColor(g_graphics.renderer, 0xFFFFFF40);
+                drawCircle(g_graphics.renderer, x + CELL_SIZE/2 - 10, y + CELL_SIZE/2 - 10, CELL_SIZE/4 - 3);
             }
         }
     }
@@ -344,57 +508,34 @@ void showGameResult(int winner) {
     SDL_SetRenderDrawBlendMode(g_graphics.renderer, SDL_BLENDMODE_BLEND);
     SDL_RenderFillRect(g_graphics.renderer, &overlay);
 
-    // Draw result box
+    // Draw result box with enhanced styling
     setColor(g_graphics.renderer, COLOR_EMPTY);
-    SDL_Rect result_box = {WINDOW_WIDTH/2 - 150, WINDOW_HEIGHT/2 - 50, 300, 100};
+    SDL_Rect result_box = {WINDOW_WIDTH/2 - 180, WINDOW_HEIGHT/2 - 60, 360, 120};
     SDL_RenderFillRect(g_graphics.renderer, &result_box);
 
-    // Draw border
+    // Draw double border
     setColor(g_graphics.renderer, COLOR_BOARD);
     SDL_RenderDrawRect(g_graphics.renderer, &result_box);
+    SDL_Rect inner_border = {result_box.x + 3, result_box.y + 3, result_box.w - 6, result_box.h - 6};
+    SDL_RenderDrawRect(g_graphics.renderer, &inner_border);
 
-#ifdef SDL_TTF_AVAILABLE
-    // Draw result text if font is available
-    if (g_graphics.has_text && g_graphics.font) {
-        SDL_Color text_color = {(COLOR_TEXT >> 24) & 0xFF, (COLOR_TEXT >> 16) & 0xFF, 
-                               (COLOR_TEXT >> 8) & 0xFF, COLOR_TEXT & 0xFF};
-        
-        const char* result_text;
-        if (winner == PLAYER) {
-            result_text = "PLAYER WINS!";
-        } else if (winner == AI) {
-            result_text = "AI WINS!";
-        } else {
-            result_text = "DRAW!";
-        }
-        
-        SDL_Texture* result_texture = createTextTexture(result_text, text_color);
-        if (result_texture) {
-            int text_w, text_h;
-            SDL_QueryTexture(result_texture, NULL, NULL, &text_w, &text_h);
-            SDL_Rect text_rect = {
-                WINDOW_WIDTH/2 - text_w/2,
-                WINDOW_HEIGHT/2 - text_h/2,
-                text_w,
-                text_h
-            };
-            SDL_RenderCopy(g_graphics.renderer, result_texture, NULL, &text_rect);
-            SDL_DestroyTexture(result_texture);
-        }
+    // Draw result text using enhanced font
+    int text_scale = 3;
+    int text_y = WINDOW_HEIGHT/2 - 18; // Center vertically
+    
+    if (winner == PLAYER) {
+        int text_width = 11 * 8 * text_scale; // "PLAYER WINS" length
+        int text_x = WINDOW_WIDTH/2 - text_width/2;
+        drawResultText(winner, text_x, text_y, text_scale);
+    } else if (winner == AI) {
+        int text_width = 7 * 8 * text_scale; // "AI WINS" length  
+        int text_x = WINDOW_WIDTH/2 - text_width/2;
+        drawResultText(winner, text_x, text_y, text_scale);
     } else {
-        // Draw simple visual indicators if no text
-        setColor(g_graphics.renderer, winner == PLAYER ? COLOR_PLAYER : 
-                winner == AI ? COLOR_AI : COLOR_BOARD);
-        SDL_Rect indicator = {WINDOW_WIDTH/2 - 20, WINDOW_HEIGHT/2 - 20, 40, 40};
-        SDL_RenderFillRect(g_graphics.renderer, &indicator);
+        int text_width = 4 * 8 * text_scale; // "DRAW" length
+        int text_x = WINDOW_WIDTH/2 - text_width/2;
+        drawResultText(winner, text_x, text_y, text_scale);
     }
-#else
-    // Draw simple visual indicators if no text
-    setColor(g_graphics.renderer, winner == PLAYER ? COLOR_PLAYER : 
-            winner == AI ? COLOR_AI : COLOR_BOARD);
-    SDL_Rect indicator = {WINDOW_WIDTH/2 - 20, WINDOW_HEIGHT/2 - 20, 40, 40};
-    SDL_RenderFillRect(g_graphics.renderer, &indicator);
-#endif
 
     SDL_RenderPresent(g_graphics.renderer);
     
