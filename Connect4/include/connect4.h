@@ -1,6 +1,8 @@
 #ifndef CONNECT4_H
  #define CONNECT4_H
 
+ #include "../libftprintf/ft_printf.h"
+
  #define EMPTY 0
  #define PLAYER 1
  #define AI 2

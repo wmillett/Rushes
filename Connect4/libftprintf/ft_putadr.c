@@ -10,7 +10,8 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "libft/libft.h"
+#include "ft_printf.h"
+#include <unistd.h>
 
 static int	ft_count_adr(unsigned long long nb)
 {

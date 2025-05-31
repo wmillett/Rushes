@@ -15,6 +15,8 @@
 # include "libft/libft.h"
 # include <stdarg.h>
 
+# define ERROR -1
+
 int	ft_putadr(void *n);
 
 int	ft_printf(const char *s, ...);
@@ -24,5 +26,15 @@ int	ft_unsigned_putnbr(unsigned int n);
 int	ft_puthex(unsigned int nb);
 
 int	ft_puthex_toupper(unsigned int nb);
+
+// Wrapper functions for libft _fd functions
+int	ft_putchar(char c);
+int	ft_putstr(char *s);
+int	ft_putnbr(int n);
+
+// Additional utility functions for Connect4
+size_t	ft_strcspn(const char *s1, const char *s2);
+int		ft_isspace(int c);
+long	ft_strtol(const char *str, char **endptr, int base);
 
 #endif

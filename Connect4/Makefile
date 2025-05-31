@@ -7,10 +7,14 @@ OBJS = $(SRCS:src/%.c=obj/%.o)
 TARGET = connect4
 OBJDIR = obj
 
-all: $(TARGET)
+# libftprintf library
+LIBFTPRINTF_DIR = libftprintf
+LIBFTPRINTF = $(LIBFTPRINTF_DIR)/libftprintf.a
+
+all: $(LIBFTPRINTF) $(TARGET)
 
 $(TARGET): $(OBJS)
-	$(CC) $(CFLAGS) $(INCLUDES) $^ -o $@
+	$(CC) $(CFLAGS) $(INCLUDES) $^ $(LIBFTPRINTF) -o $@
 
 $(OBJDIR)/%.o: src/%.c | $(OBJDIR)
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
@@ -18,11 +22,16 @@ $(OBJDIR)/%.o: src/%.c | $(OBJDIR)
 $(OBJDIR):
 	mkdir -p $(OBJDIR)
 
+$(LIBFTPRINTF):
+	$(MAKE) -C $(LIBFTPRINTF_DIR)
+
 clean:
 	rm -rf $(OBJDIR)
+	$(MAKE) -C $(LIBFTPRINTF_DIR) clean
 
 fclean: clean
 	rm -f $(TARGET)
+	$(MAKE) -C $(LIBFTPRINTF_DIR) fclean
 
 re: fclean all
 

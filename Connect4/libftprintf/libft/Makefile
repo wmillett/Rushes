@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: aouellet <aouellet@student.42.fr>          +#+  +:+       +#+         #
+#    By: wmillett <wmillett@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2023/01/11 20:14:03 by aouellet          #+#    #+#              #
-#    Updated: 2023/12/18 22:26:39 by aouellet         ###   ########.fr        #
+#    Created: 2023/01/11 20:14:03 by wmillett          #+#    #+#              #
+#    Updated: 2023/12/18 22:26:39 by wmillett         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 

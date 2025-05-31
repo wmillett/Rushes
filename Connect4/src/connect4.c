@@ -5,9 +5,9 @@
 void initBoard(GameBoard *board, int rows, int cols) {
     board->rows = rows;
     board->cols = cols;
-    board->grid = (int **)malloc(rows * sizeof(int *));
+    board->grid = (int **)ft_calloc(rows, sizeof(int *));
     for (int i = 0; i < rows; i++) {
-        board->grid[i] = (int *)calloc(cols, sizeof(int));
+        board->grid[i] = (int *)ft_calloc(cols, sizeof(int));
     }
 }
 
@@ -20,43 +20,43 @@ void freeBoard(GameBoard *board) {
 
 void displayBoard(GameBoard *board) {
     // Print column numbers header
-    printf("  ");
+    ft_printf("  ");
     for (int j = 0; j < board->cols; j++) {
-        printf("%d ", j);
+        ft_printf("%d ", j);
     }
-    printf("\n");
+    ft_printf("\n");
     
     // Print top border
-    printf("  ");
+    ft_printf("  ");
     for (int j = 0; j < board->cols; j++) {
-        printf("--");
+        ft_printf("--");
     }
-    printf("-\n");
+    ft_printf("-\n");
     
     // Print board with colors
     for (int i = 0; i < board->rows; i++) {
-        printf("| ");
+        ft_printf("| ");
         for (int j = 0; j < board->cols; j++) {
             if (board->grid[i][j] == PLAYER) {
                 // Red for Player 1
-                printf("\033[31m●\033[0m ");
+                ft_printf("\033[31m●\033[0m ");
             } else if (board->grid[i][j] == AI) {
                 // Yellow for AI/Player 2
-                printf("\033[33m●\033[0m ");
+                ft_printf("\033[33m●\033[0m ");
             } else {
                 // Empty space
-                printf("· ");
+                ft_printf("· ");
             }
         }
-        printf("|\n");
+        ft_printf("|\n");
     }
     
     // Print bottom border
-    printf("  ");
+    ft_printf("  ");
     for (int j = 0; j < board->cols; j++) {
-        printf("--");
+        ft_printf("--");
     }
-    printf("-\n");
+    ft_printf("-\n");
 }
 
 int isValidMove(GameBoard *board, int col) {

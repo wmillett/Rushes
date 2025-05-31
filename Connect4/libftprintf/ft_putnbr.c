@@ -1,28 +1,34 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   ft_lstnew.c                                        :+:      :+:    :+:   */
+/*   ft_putnbr.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: wmillett <wmillett@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/01/26 17:41:33 by wmillett          #+#    #+#             */
-/*   Updated: 2023/01/26 19:29:43 by wmillett         ###   ########.fr       */
+/*   Created: 2023/02/12 15:42:00 by wmillett          #+#    #+#             */
+/*   Updated: 2023/02/12 15:42:00 by wmillett         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "libft.h"
+#include "ft_printf.h"
 
-t_list	*ft_lstnew(void *content)
+static int	ft_numlen(int n)
 {
-	t_list	*new_lst;
+	int	len;
 
-	new_lst = (t_list *)malloc(sizeof(t_list));
-	if (!new_lst)
-		return (NULL);
-	if (!content)
-		new_lst->content = NULL;
-	else
-		new_lst->content = content;
-	new_lst->next = NULL;
-	return (new_lst);
+	len = 0;
+	if (n <= 0)
+		len = 1;
+	while (n != 0)
+	{
+		n /= 10;
+		len++;
+	}
+	return (len);
 }
+
+int	ft_putnbr(int n)
+{
+	ft_putnbr_fd(n, 1);
+	return (ft_numlen(n));
+} 

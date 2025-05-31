@@ -19,6 +19,12 @@ SRC = ft_printf.c\
 		ft_puthex.c\
 		ft_puthex_toupper.c\
 		ft_unsigned_putnbr.c\
+		ft_putchar.c\
+		ft_putstr.c\
+		ft_putnbr.c\
+		ft_strcspn.c\
+		ft_isspace.c\
+		ft_strtol.c\
 		
 OBJ = $(SRC:%.c=%.o)
 RM = rm -f

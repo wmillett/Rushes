@@ -10,7 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "libft/libft.h"
+#include "ft_printf.h"
 
 static int	ft_unsigned_numlen(unsigned long n)
 {
@@ -33,7 +33,7 @@ int	ft_unsigned_putnbr(unsigned int n)
 	int	check;
 
 	len = ft_unsigned_numlen(n);
-	if (n >= 0 && n < 10)
+	if (n < 10)
 	{
 		check = ft_putchar(n + 48);
 		if (check == ERROR)
@@ -41,10 +41,10 @@ int	ft_unsigned_putnbr(unsigned int n)
 	}
 	else
 	{
-		check = ft_putnbr(n / 10);
+		check = ft_unsigned_putnbr(n / 10);
 		if (check == ERROR)
 			return (ERROR);
-		check = ft_putnbr(n % 10);
+		check = ft_putchar((n % 10) + 48);
 		if (check == ERROR)
 			return (ERROR);
 	}
