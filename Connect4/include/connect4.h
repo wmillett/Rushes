@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <stdbool.h>
 
 #define EMPTY 0
 #define PLAYER 1
@@ -32,5 +33,13 @@ int aiMove(GameBoard *board);
 
 // Custom input function using get_next_line
 int ft_getline_input(char *buffer, int max_size);
+
+// Graphics functions (SDL2 bonus mode)
+int initGraphics(void);
+void cleanupGraphics(void);
+void drawBoard(GameBoard* board);
+int handleGraphicsEvents(GameBoard* board);
+void showGameResult(int winner);
+bool isGraphicsMode(void);
 
 #endif

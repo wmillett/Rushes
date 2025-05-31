@@ -91,9 +91,15 @@ int getValidColumn(int maxCol) {
 }
 
 int main(int argc, char *argv[]) {
-    if (argc != 3) {
-        ft_printf("Usage: %s <rows> <cols>\n", argv[0]);
+    bool graphics_mode = false;
+    
+    // Check for bonus argument
+    if (argc == 4 && ft_strncmp(argv[3], "bonus", 5) == 0) {
+        graphics_mode = true;
+    } else if (argc != 3) {
+        ft_printf("Usage: %s <rows> <cols> [bonus]\n", argv[0]);
         ft_printf("Example: %s 6 7\n", argv[0]);
+        ft_printf("Example: %s 6 7 bonus\n", argv[0]);
         return 1;
     }
 
@@ -104,13 +110,13 @@ int main(int argc, char *argv[]) {
     
     if (*endptr1 != '\0' || *endptr2 != '\0') {
         ft_printf("Error: Invalid input. Please provide valid integers for rows and columns.\n");
-        ft_printf("Usage: %s <rows> <cols>\n", argv[0]);
+        ft_printf("Usage: %s <rows> <cols> [bonus]\n", argv[0]);
         return 1;
     }
     
     if (rows_long <= 0 || cols_long <= 0) {
         ft_printf("Error: Rows and columns must be positive integers.\n");
-        ft_printf("Usage: %s <rows> <cols>\n", argv[0]);
+        ft_printf("Usage: %s <rows> <cols> [bonus]\n", argv[0]);
         return 1;
     }
     
@@ -132,6 +138,17 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    // Initialize graphics if bonus mode
+    if (graphics_mode) {
+        if (!initGraphics()) {
+            ft_printf("Failed to initialize graphics. Falling back to terminal mode.\n");
+            graphics_mode = false;
+        } else {
+            ft_printf("🎮 BONUS MODE: Graphical interface enabled!\n");
+            ft_printf("💡 Click on columns to make your move, or use ESC to quit.\n");
+        }
+    }
+
     GameBoard board;
     initBoard(&board, rows, cols);
 
@@ -141,7 +158,11 @@ int main(int argc, char *argv[]) {
     // Game introduction
     ft_printf("\n");
     ft_printf("=================================================\n");
-    ft_printf("           🔴 CONNECT 4 GAME 🟡\n");
+    if (graphics_mode) {
+        ft_printf("       🔴 CONNECT 4 GAME - BONUS MODE 🟡\n");
+    } else {
+        ft_printf("           🔴 CONNECT 4 GAME 🟡\n");
+    }
     ft_printf("=================================================\n");
     ft_printf("Player 1: \033[31m●\033[0m (Red)    |    AI: \033[33m●\033[0m (Yellow)\n");
     ft_printf("=================================================\n");
@@ -156,6 +177,9 @@ int main(int argc, char *argv[]) {
 
     // Display initial board
     displayBoard(&board);
+    if (graphics_mode) {
+        drawBoard(&board);
+    }
 
     while (1) {
         ft_printf("\n");
@@ -164,13 +188,42 @@ int main(int argc, char *argv[]) {
         if (currentPlayer == PLAYER) {
             ft_printf("🔴 PLAYER 1's TURN\n");
             ft_printf("-------------------------------------------------\n");
-            int col;
-            do {
-                col = getValidColumn(cols);
-                if (!isValidMove(&board, col)) {
-                    ft_printf("Error: Column %d is full. Please choose another column.\n", col);
+            
+            int col = -1;
+            
+            if (graphics_mode) {
+                ft_printf("Click on a column in the graphics window to make your move...\n");
+                
+                // Wait for player input from graphics
+                while (col == -1) {
+                    col = handleGraphicsEvents(&board);
+                    
+                    if (col == -2) { // Quit requested
+                        ft_printf("Game ended by user.\n");
+                        goto cleanup;
+                    }
+                    
+                    if (col >= 0 && !isValidMove(&board, col)) {
+                        ft_printf("Column %d is full. Please choose another column.\n", col);
+                        col = -1;
+                    }
+                    
+                    // Small delay to prevent 100% CPU usage
+                    if (graphics_mode) {
+                        drawBoard(&board); // Refresh graphics for hover effects
+                    }
                 }
-            } while (!isValidMove(&board, col));
+            } else {
+                // Terminal input mode
+                do {
+                    col = getValidColumn(cols);
+                    if (!isValidMove(&board, col)) {
+                        ft_printf("Error: Column %d is full. Please choose another column.\n", col);
+                    }
+                } while (!isValidMove(&board, col));
+            }
+            
+            ft_printf("Player 1 plays column %d\n", col);
             makeMove(&board, col, PLAYER);
         } else {
             ft_printf("🟡 AI's TURN\n");
@@ -178,10 +231,26 @@ int main(int argc, char *argv[]) {
             int col = aiMove(&board);
             ft_printf("AI plays column %d\n", col);
             makeMove(&board, col, AI);
+            
+            // Small delay so player can see AI move
+            if (graphics_mode) {
+                // Process any pending graphics events during AI turn
+                int dummy_col;
+                do {
+                    dummy_col = handleGraphicsEvents(&board);
+                    if (dummy_col == -2) { // Quit requested
+                        ft_printf("Game ended by user.\n");
+                        goto cleanup;
+                    }
+                } while (dummy_col >= 0); // Ignore valid moves during AI turn
+            }
         }
 
         ft_printf("\n");
         displayBoard(&board);
+        if (graphics_mode) {
+            drawBoard(&board);
+        }
 
         if (checkWin(&board, currentPlayer)) {
             ft_printf("\n");
@@ -192,6 +261,10 @@ int main(int argc, char *argv[]) {
                 ft_printf("🤖 AI (\033[33m●\033[0m) WINS! 🤖\n");
             }
             ft_printf("=================================================\n");
+            
+            if (graphics_mode) {
+                showGameResult(currentPlayer);
+            }
             break;
         }
 
@@ -200,13 +273,21 @@ int main(int argc, char *argv[]) {
             ft_printf("=================================================\n");
             ft_printf("🤝 IT'S A DRAW! 🤝\n");
             ft_printf("=================================================\n");
+            
+            if (graphics_mode) {
+                showGameResult(0); // 0 for draw
+            }
             break;
         }
 
         currentPlayer = (currentPlayer == PLAYER) ? AI : PLAYER;
     }
 
+cleanup:
     freeBoard(&board);
+    if (graphics_mode) {
+        cleanupGraphics();
+    }
     cleanup_get_next_line();  // Clean up get_next_line static memory
     return 0;
 }
