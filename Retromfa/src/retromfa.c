@@ -157,6 +157,17 @@
 
 
 int find_image(t_mfa *mfa, const char *filename) {
+
+    (void)mfa; // Suppress unused parameter warning
+    (void)filename; // Suppress unused parameter warning
+
+    unsigned char *buffer = list_malloc(1, sizeof(unsigned char) * 1024);
+    if (buffer == NULL) {
+        fprintf(stderr, "Error: Memory allocation failed\n");
+        return -1;
+    }
+
+
     // This function is a placeholder for finding an image in the MFA structure.
     // It should be implemented to search through the mfa->img_list for the specified filename.
     // For now, it returns -1 to indicate that the image was not found.

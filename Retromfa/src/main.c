@@ -60,26 +60,41 @@ int main(int argc, char *argv[]) {
     }
 
     // Setup mlx
-    t_mfa mfa;
-    mfa.mlx_ptr = mlx_init();
-    if (!mfa.mlx_ptr) {
-        fprintf(stderr, "Error: Failed to initialize MLX\n");
+
+    t_mfa *mfa = list_malloc(1, sizeof(t_mfa));
+    if (!mfa) {
+        fprintf(stderr, "Error: Failed to allocate memory for t_mfa\n");
         return EXIT_FAILURE;
     }
-    mfa.win_ptr = mlx_new_window(mfa.mlx_ptr, 800, 600, "RetroMFA Viewer");
-    if (!mfa.win_ptr) {
+    
+    mfa->mlx_ptr = mlx_init();
+    if (!mfa->mlx_ptr) {
+        fprintf(stderr, "Error: Failed to initialize MLX\n");
+        free(mfa);
+        return EXIT_FAILURE;
+    }
+    mfa->win_ptr = mlx_new_window(mfa->mlx_ptr, 800, 600, "RetroMFA Viewer");
+    if (!mfa->win_ptr) {
         fprintf(stderr, "Error: Failed to create MLX window\n");
-        //mlx_destroy_display(mfa.mlx_ptr);
+        exit_mlx(mfa);
+        free(mfa);
         return EXIT_FAILURE;
     }
     
 
-    mlx_key_hook(mfa.win_ptr, key_hook, &mfa);
-    mlx_loop(mfa.mlx_ptr);
+    mlx_key_hook(mfa->win_ptr, key_hook, mfa);
+    mlx_loop(mfa->mlx_ptr);
 
+    for (int i = 0; i < mfa->img_count; i++) {
+        mlx_destroy_image(mfa->mlx_ptr, mfa->img_list[i].img);
+        // if (img->data) {
+        //     free(img->data);
+        //     img->data = NULL;
+        // }
+    }
 
-
-    exit_mlx(&mfa);
+    exit_mlx(mfa);
+    all_free(); // Free all allocated memory
 
     // // Process each MFA file
     // printf("Processing %d MFA file(s)...\n", argc - 1);
