@@ -59,6 +59,8 @@ typedef struct s_mfa
     mfa_image_t    img_list[100];
 }				t_mfa;
 
+void	exit_mlx(t_mfa *mfa);
+int		key_hook(int keycode, t_mfa *mfa);
 
 // Garbage Collector
 

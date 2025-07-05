@@ -11,21 +11,29 @@ static bool check_extension(const char *filename, const char *extension) {
 }
 
 
-static void exit_mlx(t_mfa *mfa) {
-    if (mfa->win_ptr) {
-        mlx_destroy_window(mfa->mlx_ptr, mfa->win_ptr);
+static bool check_files(const char *filename) {
+
+    if (!check_extension(filename, EXTENSION_MFA)) {
+        fprintf(stderr, "Error: File %s does not have .mfa extension\n", filename);
+        return false;
     }
-    if (mfa->mlx_ptr) {
-        mlx_destroy_display(mfa->mlx_ptr);
+    int fd = open(filename, O_RDONLY);
+    if (fd == -1) {
+        fprintf(stderr, "Error: Failed to open file %s\n", filename);
+        return false;
     }
-    //free(mfa);
+    char buffer[5] = {0};
+	read(fd, buffer, 4);
+	if (strcmp(buffer, "MMF2") != 0)
+	{
+        fprintf(stderr, "Error: File %s is not a valid MFA file\n", filename);
+		close(fd);
+		return false;
+	}
+    close(fd);
+    return true;
 }
 
-static int key_hook(int keycode, t_mfa *mfa) {
-    if (keycode == ESC)
-        mlx_loop_end(mfa->mlx_ptr);
-    return 0;
-}
 
 
 int main(int argc, char *argv[]) {
@@ -39,8 +47,8 @@ int main(int argc, char *argv[]) {
     }
 
     for (int i = 1; i < argc; i++) {
-        if (!check_extension(argv[i], EXTENSION_MFA)) {
-            fprintf(stderr, "Error: File %s does not have .mfa extension\n", argv[i]);
+        if (!check_files(argv[i])) {
+            //fprintf(stderr, "Error: File %s does not have .mfa extension\n", argv[i]);
             return EXIT_FAILURE;
         }
     }
