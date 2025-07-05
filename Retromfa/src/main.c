@@ -18,7 +18,13 @@ static void exit_mlx(t_mfa *mfa) {
     if (mfa->mlx_ptr) {
         mlx_destroy_display(mfa->mlx_ptr);
     }
-    free(mfa);
+    //free(mfa);
+}
+
+static int key_hook(int keycode, t_mfa *mfa) {
+    if (keycode == ESC)
+        mlx_loop_end(mfa->mlx_ptr);
+    return 0;
 }
 
 
@@ -54,7 +60,7 @@ int main(int argc, char *argv[]) {
     }
     
 
-
+    mlx_key_hook(mfa.win_ptr, key_hook, &mfa);
     mlx_loop(mfa.mlx_ptr);
 
 

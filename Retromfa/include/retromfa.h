@@ -16,7 +16,7 @@
 # include "mlx.h"
 
 # define EXTENSION_MFA ".mfa"
-
+# define ESC 65307
 
 typedef struct {
     char magic[4];         
