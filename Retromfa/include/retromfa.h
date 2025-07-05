@@ -18,28 +18,37 @@
 # define EXTENSION_MFA ".mfa"
 # define ESC 65307
 
-typedef struct {
-    char magic[4];         
-    uint32_t version;      
-    uint32_t num_objects; 
-    uint32_t header_size; 
-} mfa_header_t;
+
+
+
+
+// typedef struct {
+//     char magic[4];         
+//     uint32_t version;      
+//     uint32_t num_objects; 
+//     uint32_t header_size; 
+// } mfa_header_t;
+
+
+// typedef struct {
+//     uint32_t offset;      
+//     uint32_t size;        
+//     uint32_t type;        
+//     char name[256];       
+// } mfa_object_t;
 
 
 typedef struct {
-    uint32_t offset;      
-    uint32_t size;        
-    uint32_t type;        
-    char name[256];       
-} mfa_object_t;
-
-
-typedef struct {
-    uint32_t width;
-    uint32_t height;
+    int16_t width;
+    int16_t height;
     uint32_t bpp;         
     uint8_t *data;        
-    size_t data_size;
+    void *img;
+    char type;
+    bool endian; // 0 for little-endian, 1 for big-endian
+    int line_size; // Size of a single line in bytes
+    char *address; // Pointer to the image data in memory
+    
 } mfa_image_t;
 
 
@@ -56,7 +65,8 @@ typedef struct s_mfa
 {
     void	*mlx_ptr;
     void	*win_ptr;
-    mfa_image_t    img_list[100];
+    int		img_count; // Count of images in img_list
+    mfa_image_t    img_list[1000]; // Array to hold images
 }				t_mfa;
 
 void	exit_mlx(t_mfa *mfa);

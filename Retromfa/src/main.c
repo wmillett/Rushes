@@ -23,7 +23,13 @@ static bool check_files(const char *filename) {
         return false;
     }
     char buffer[5] = {0};
-	read(fd, buffer, 4);
+	if(!read(fd, buffer, 4))
+    {
+        fprintf(stderr, "Error: Failed to read file %s\n", filename);
+        close(fd);
+        return false;
+    }
+    // Check if the file starts with "MMF2"
 	if (strcmp(buffer, "MMF2") != 0)
 	{
         fprintf(stderr, "Error: File %s is not a valid MFA file\n", filename);
