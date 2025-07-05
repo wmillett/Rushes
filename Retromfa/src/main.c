@@ -11,6 +11,16 @@ static bool check_extension(const char *filename, const char *extension) {
 }
 
 
+static void exit_mlx(t_mfa *mfa) {
+    if (mfa->win_ptr) {
+        mlx_destroy_window(mfa->mlx_ptr, mfa->win_ptr);
+    }
+    if (mfa->mlx_ptr) {
+        mlx_destroy_display(mfa->mlx_ptr);
+    }
+    free(mfa);
+}
+
 
 int main(int argc, char *argv[]) {
     printf("RetroMFA - MFA File Image Extractor\n");
@@ -45,15 +55,21 @@ int main(int argc, char *argv[]) {
     
 
 
-    // Process each MFA file
-    printf("Processing %d MFA file(s)...\n", argc - 1);
-    for (int i = 1; i < argc; i++) {
-        printf("\n=== Processing file: %s ===\n", argv[i]);
-        if (!parse_mfa_file(argv[i])) {
-            fprintf(stderr, "Failed to process %s\n", argv[i]);
-            return EXIT_FAILURE;
-        }
-    }
+    mlx_loop(mfa.mlx_ptr);
+
+
+
+    exit_mlx(&mfa);
+
+    // // Process each MFA file
+    // printf("Processing %d MFA file(s)...\n", argc - 1);
+    // for (int i = 1; i < argc; i++) {
+    //     printf("\n=== Processing file: %s ===\n", argv[i]);
+    //     if (!parse_mfa_file(argv[i])) {
+    //         fprintf(stderr, "Failed to process %s\n", argv[i]);
+    //         return EXIT_FAILURE;
+    //     }
+    // }
 
     printf("\nAll files processed successfully!\n");
     return EXIT_SUCCESS;
