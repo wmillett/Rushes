@@ -2,13 +2,13 @@ CC = cc
 CFLAGS = -Wall -Wextra -Werror
 INCLUDES = -Iinclude
 
-SRCS = src/main.c src/retromfa.c
+SRCS = $(wildcard src/*.c)
 OBJS = $(SRCS:src/%.c=obj/%.o)
 TARGET = retromfa
 OBJDIR = obj
 
-#TODO: remove this when the library is ready
-
+MFAFILES = $(wildcard assets/MFA/*.mfa)
+TESTFILES = $(wildcard assets/testerror/*)
 
 all: $(TARGET)
 
@@ -29,8 +29,13 @@ fclean: clean
 
 re: fclean all
 
+testerror: $(TARGET)
+	@echo "Running tests..."
+	./$(TARGET) $(TESTFILES)
+
+
 run: $(TARGET)
-	./$(TARGET)
+	./$(TARGET) $(MFAFILES)
 
 
-.PHONY: all clean fclean re run bonus check-sdl2
+.PHONY: all clean fclean re run testerror
