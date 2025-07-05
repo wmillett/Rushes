@@ -7,7 +7,7 @@ OBJS = $(SRCS:src/%.c=obj/%.o)
 TARGET = retromfa
 OBJDIR = obj
 
-#TODO: remove this when the library is ready
+#TODO: remove this when the library is ready for use
 
 
 all: $(TARGET)
