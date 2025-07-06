@@ -29,16 +29,16 @@
 
 // MMF2 header flags for image types
 
-# define HEADER16_FLAG 0x06; // MMF2 header flag for 16-bit images
-# define HEADER24_FLAG 0x04; // MMF2 header flag for 24-bit images
+# define HEADER16_FLAG 0x06 // MMF2 header flag for 16-bit images
+# define HEADER24_FLAG 0x04 // MMF2 header flag for 24-bit images
+# define HEADER_SIZE 4 // Size of the MMF2 header in bytes
+
+# define FOUND_16 1 // Flag to indicate a 16-bit image was found
+# define FOUND_24 2 // Flag to indicate a 24-bit image was found
 
 
-# define FOUND_16 1; // Flag to indicate a 16-bit image was found
-# define FOUND_24 2; // Flag to indicate a 24-bit image was found
-
-
-# define IMAGE_SIZE_OFFSET -4;
-# define IMAGE_PIXEL_OFFSET 16; // Offset where image data starts in the file
+# define IMAGE_SIZE_OFFSET -4
+# define IMAGE_PIXEL_OFFSET 16 // Offset where image data starts in the file
 
 # define FILE_CHUNK_SIZE 1024 // Size of each chunk to read from the file
 
@@ -58,6 +58,26 @@ typedef struct {
 } mfa_image_t;
 
 
+// // Header pattern for 16-bit images
+// static const int16_t HEADER_16BIT[] = {0x06, 0x10, 0x00, 0x00};
+
+// // Header pattern for 24-bit images
+// static const int16_t HEADER_24BIT[] = {0x04, 0x10, 0x00, 0x00};
+
+
+
+typedef enum {
+    HEADER_NONE = 0,
+    HEADER_16BIT,
+    HEADER_24BIT,
+    HEADER_TYPE_COUNT  // for bounds checking if needed
+} HeaderType;
+
+static const int16_t IMAGE_HEADERS[HEADER_TYPE_COUNT][HEADER_SIZE] = {
+    [HEADER_NONE]  = {0x00, 0x00, 0x00, 0x00},  // Placeholder for NONE
+    [HEADER_16BIT] = {0x06, 0x10, 0x00, 0x00},  // 16-bit image header
+    [HEADER_24BIT] = {0x04, 0x10, 0x00, 0x00}   // 24-bit image header
+};
 
 
 // Mlx and MFA list structures
@@ -67,13 +87,16 @@ typedef struct s_mfa
     void	*mlx_ptr;
     void	*win_ptr;
     int		img_count; // Count of images in img_list
-    char    *filename_index; // Name of the MFA file
+    char    *filename; // Name of the MFA file
     char    *content; // Content of the MFA file
     size_t  size; // Size of the content
     mfa_image_t    img_list[1000]; // Array to hold images
 }				t_mfa;
 
-bool find_images(t_mfa *mfa, const char *filename);
+
+
+
+bool find_images(t_mfa *mfa);
 
 
 

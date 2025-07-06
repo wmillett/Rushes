@@ -68,12 +68,12 @@ int main(int argc, char *argv[]) {
     mfa->img_count = 0;
     mfa->mlx_ptr = NULL;
     mfa->win_ptr = NULL;
-    mfa->filename_index = NULL;
+    mfa->filename = NULL;
     mfa->content = NULL;
     mfa->size = 0;
     for (int i = 1; i < argc; i++) {
-        mfa->filename_index = argv[i];
-        if (find_images(mfa, argv[i]) == false) {
+        mfa->filename = argv[i];
+        if (find_images(mfa) == false) {
             all_free(); // Free all allocated memory
             return EXIT_FAILURE;
         }
@@ -114,7 +114,7 @@ int main(int argc, char *argv[]) {
 
 
 
-    
+
     exit_mlx(mfa);
     printf("\nExit Success\n");
     return EXIT_SUCCESS;
