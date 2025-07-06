@@ -53,9 +53,9 @@ typedef struct s_list
 # define BUFFER_SIZE 1024
 
 // list utils
-t_list	*createNode(void *mlx_img, char *data, size_t width, size_t height);
+t_list *createNode(void *mlx_img, char *data, size_t width, size_t height);
 void	appendNode(t_data *data, t_list *node);
-void	deleteList(t_data *data);
+void	deleteList(t_list **head);
 
 // file reader
 void	readAllBytes(const char *filename, t_input *input);

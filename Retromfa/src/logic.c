@@ -3,19 +3,112 @@
 t_data g_app = {NULL, 0ul, NULL, {NULL, 0}};
 volatile sig_atomic_t g_should_exit = 0;
 
-void	exit(int code)
+
+void destroy_all_windows(t_data *app)
 {
-	deleteList(&g_app);
-	free(g_app.input.content);
-	mlx_destroy_display(g_app.mlx_ptr);
-	free(g_app.mlx_ptr);
-	exit(code);
+    t_list *iter = app->images;
+    while (iter)
+    {
+        if (iter->content.win_ptr && app->mlx_ptr)
+        {
+            mlx_destroy_window(app->mlx_ptr, iter->content.win_ptr);
+            iter->content.win_ptr = NULL; // Mark as destroyed
+        }
+        iter = iter->next;
+    }
 }
 
-int	on_close(void)
+void deleteList(t_list **head)
 {
-	exit(0);
-	return 0;
+    if (!head || !*head)
+        return;
+
+    t_list *current = *head;
+    t_list *next;
+
+    while (current)
+    {
+        next = current->next;
+        
+        // Destroy the MLX image if it exists
+        if (current->content.img_ptr && g_app.mlx_ptr)
+        {
+            mlx_destroy_image(g_app.mlx_ptr, current->content.img_ptr);
+            current->content.img_ptr = NULL;
+        }
+        
+        // DO NOT free content.data - it's managed by MLX!
+        // if (current->content.data) {
+        //    free(current->content.data);
+        // }
+        
+        // Free the list node
+        free(current);
+        current = next;
+    }
+    
+    *head = NULL;
+}
+
+t_list *createNode(void *mlx_img,char *data ,size_t width, size_t height)
+{
+	(void)data;
+    t_list *node = calloc(1, sizeof(t_list));
+    if (!node)
+    {
+        return NULL;
+    }
+
+    node->content = (t_image){
+        .img_ptr = mlx_img,
+        .data = NULL,  // Important: Don't store the MLX data pointer
+        .width = width,
+        .height = height,
+        .win_ptr = NULL
+    };
+    node->next = NULL;
+    
+    g_app.nb_images++;  // Update image count if using global counter
+    
+    return node;
+}
+
+void cleanup_and_exit(int code)
+{
+    static bool is_cleaning = false;
+    
+    if (is_cleaning) return;
+    is_cleaning = true;
+
+    // 1. Destroy all windows first (windows contain images)
+    destroy_all_windows(&g_app);
+    
+    // 2. Delete the image list (will destroy remaining images)
+    deleteList(&g_app.images);
+    g_app.nb_images = 0;  // Reset counter
+    
+    // 3. Clean up input data
+    if (g_app.input.content)
+    {
+        free(g_app.input.content);
+        g_app.input.content = NULL;
+        g_app.input.size = 0;
+    }
+    
+    // 4. Destroy MLX display (must be last)
+    if (g_app.mlx_ptr)
+    {
+        mlx_destroy_display(g_app.mlx_ptr);
+        free(g_app.mlx_ptr);
+        g_app.mlx_ptr = NULL;
+    }
+    
+    _exit(code);
+}
+int on_close(void)
+{
+    cleanup_and_exit(0);
+    return 0;
 }
 
 void	render_rgb888(char *dst, const unsigned char *src, int width, int height)
@@ -34,7 +127,7 @@ void	add_rgb888_image(const char *src, int width, int height)
 	if (!img)
 	{
 		fprintf(stderr, "Failed to create image\n");
-		exit(1);
+		cleanup_and_exit(1);
 	}
 	char *dst = mlx_get_data_addr(img, &bpp, &line_size, &endian);
 	render_rgb888(dst, (unsigned char *)src, width, height);
@@ -43,7 +136,7 @@ void	add_rgb888_image(const char *src, int width, int height)
 	{
 		fprintf(stderr, "Failed to allocate image node\n");
 		mlx_destroy_image(g_app.mlx_ptr, img);
-		exit(1);
+		cleanup_and_exit(1);
 	}
 	appendNode(&g_app, entry);
 }
@@ -68,7 +161,7 @@ void	add_rgb555_image(const char *src, int width, int height)
 	if (!img)
 	{
 		fprintf(stderr, "Failed to create image\n");
-		exit(1);
+		cleanup_and_exit(1);
 	}
 	char *dst = mlx_get_data_addr(img, &bpp, &line_size, &endian);
 	render_rgb555(dst, (unsigned char *)src, width, height);
@@ -77,7 +170,7 @@ void	add_rgb555_image(const char *src, int width, int height)
 	{
 		fprintf(stderr, "Failed to allocate image node\n");
 		mlx_destroy_image(g_app.mlx_ptr, img);
-		exit(1);
+		cleanup_and_exit(1);
 	}
 	appendNode(&g_app, entry);
 }
@@ -91,7 +184,7 @@ void	display_all_images(void)
 		if (!node->content.win_ptr)
 		{
 			fprintf(stderr, "Failed to create window\n");
-			exit(1);
+			cleanup_and_exit(1);
 		}
 		mlx_put_image_to_window(g_app.mlx_ptr, node->content.win_ptr, node->content.img_ptr, 0, 0);
 		mlx_hook(node->content.win_ptr, 2, 1L << 0, on_close, NULL);
@@ -140,7 +233,7 @@ int main(int argc, char **argv)
     if (g_app.input.content == NULL)
     {
         fprintf(stderr, "Error: Unable to read file '%s'.\n", argv[1]);
-        exit(1);
+        cleanup_and_exit(1);
     }
 
     int images = 0;
@@ -182,6 +275,8 @@ int main(int argc, char **argv)
     //mlx_loop_hook(g_app.mlx_ptr, quick_exit, NULL);
     mlx_loop(g_app.mlx_ptr);
 
-    exit(0);
+    cleanup_and_exit(0);
     return 0;
 }
+
+
