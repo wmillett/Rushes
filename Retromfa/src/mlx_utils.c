@@ -14,7 +14,7 @@ void exit_mlx(t_mfa *mfa) {
 }
 
 int key_hook(int keycode, t_mfa *mfa) {
-    if (keycode == ESC)
+    if (keycode == ESC_KEY)
         mlx_loop_end(mfa->mlx_ptr);
     return 0;
 }

@@ -16,17 +16,31 @@
 # include "mlx.h"
 
 # define EXTENSION_MFA ".mfa"
-# define ESC 65307
-
-
-
+# define ESC_KEY 65307
 # define BUFFER_SIZE 4096 // Size of the buffer for reading files
+
 
 # define MAX_IMAGES 1000 // Maximum number of images to store in the mfa structure
 # define MAX_IMAGE_SIZE 10485760 // Maximum size of a single image in bytes (10 MB)
 
+# define READ_BINARY "rb" // Read mode for binary files
 
 
+
+// MMF2 header flags for image types
+
+# define HEADER16_FLAG 0x06; // MMF2 header flag for 16-bit images
+# define HEADER24_FLAG 0x04; // MMF2 header flag for 24-bit images
+
+
+# define FOUND_16 1; // Flag to indicate a 16-bit image was found
+# define FOUND_24 2; // Flag to indicate a 24-bit image was found
+
+
+# define IMAGE_SIZE_OFFSET -4;
+# define IMAGE_PIXEL_OFFSET 16; // Offset where image data starts in the file
+
+# define FILE_CHUNK_SIZE 1024 // Size of each chunk to read from the file
 
 // Structures for handling MFA images
 
@@ -36,7 +50,7 @@ typedef struct {
     uint32_t bpp;         
     uint8_t *data;        
     void *img;
-    char type;
+    int type;
     bool endian; // 0 for little-endian, 1 for big-endian
     int line_size; // Size of a single line in bytes
     char *address; // Pointer to the image data in memory

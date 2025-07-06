@@ -1,5 +1,5 @@
-CC = cc
-CFLAGS = -Wall -Wextra -Werror -I. -Iminilibx-linux -I/usr/include -g3 -O3
+CC = gcc
+CFLAGS = -Wall -Wextra -Werror -I. -Iminilibx-linux -I/usr/include -O3
 LFLAGS	=	-Lminilibx-linux -lmlx -L/usr/lib -Iminilibx-linux -lXext -lX11 -lm -lz
 INCLUDES = -Iinclude
 

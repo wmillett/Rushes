@@ -110,17 +110,12 @@ int main(int argc, char *argv[]) {
         // }
     }
 
-    exit_mlx(mfa);
-    // // Process each MFA file
-    // printf("Processing %d MFA file(s)...\n", argc - 1);
-    // for (int i = 1; i < argc; i++) {
-    //     printf("\n=== Processing file: %s ===\n", argv[i]);
-    //     if (!parse_mfa_file(argv[i])) {
-    //         fprintf(stderr, "Failed to process %s\n", argv[i]);
-    //         return EXIT_FAILURE;
-    //     }
-    // }
 
+
+
+
+    
+    exit_mlx(mfa);
     printf("\nExit Success\n");
     return EXIT_SUCCESS;
 }
