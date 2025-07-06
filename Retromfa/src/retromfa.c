@@ -1,5 +1,4 @@
 #include "retromfa.h"
-
 bool read_through_file(t_mfa *mfa) {
     FILE *file = fopen(mfa->filename, READ_BINARY);
     if (!file) {
@@ -54,70 +53,69 @@ bool read_through_file(t_mfa *mfa) {
                         return false;
                     }
 
-                    // Debugging: Print the raw bytes for width and height
-                    printf("Raw size bytes at position %lu: %02x %02x %02x %02x\n",
-                           ftell(file) - 4, size_buffer[0], size_buffer[1], size_buffer[2], size_buffer[3]);
-
-                    // Convert bytes to width and height
                     int16_t width = (size_buffer[0] | (size_buffer[1] << 8));
                     int16_t height = (size_buffer[2] | (size_buffer[3] << 8));
 
-                    printf("Detected image size: width=%d, height=%d\n", width, height);
-
                     if (width > 0 && height > 0) {
                         fseek(file, file_offset + i + IMAGE_PIXEL_OFFSET, SEEK_SET);
-                        mfa->img_list[mfa->img_count].type = is_image;
+
+                        // Set up the image structure
+                        mfa_image_t *new_image = &mfa->img_list[mfa->img_count];
+                        new_image->type = is_image;
+                        new_image->width = width;
+                        new_image->height = height;
+
                         size_t img_size = width * height;
                         if (is_image == FOUND_24)
                             img_size = (width + width % 2) * height; // Adjust for 24-bit images
-                        // if (img_size > MAX_IMAGE_SIZE) {
-                        //     fprintf(stderr, "Error: Image size exceeds maximum limit (%u bytes)\n", MAX_IMAGE_SIZE);
-                        //     free(buffer);
-                        //     fclose(file);
-                        //     return false;
-                        // }
-                        mfa->img_list[mfa->img_count].data = tracked_malloc(img_size * is_image);
-                        if (!mfa->img_list[mfa->img_count].data) {
+
+                        // Allocate memory for the raw image data
+                        new_image->data = tracked_malloc(img_size * is_image);
+                        if (!new_image->data) {
                             fprintf(stderr, "Error: Memory allocation failed for image data\n");
                             free(buffer);
                             fclose(file);
                             return false;
                         }
 
-
-                        size_t b = fread(mfa->img_list[mfa->img_count].data, sizeof(char), img_size * is_image, file);
-                        if (ferror(file) && b == 0) {
+                        // Read the image data
+                        size_t bytes_read = fread(new_image->data,
+                                                sizeof(char),
+                                                img_size * is_image,
+                                                file);
+                        if (ferror(file) || bytes_read != img_size * is_image) {
                             perror("Error reading image data");
-                            //free(mfa->img_list[mfa->img_count].data);
                             free(buffer);
                             fclose(file);
                             return false;
                         }
 
-                        mfa->img_list[mfa->img_count].width = width;
-                        mfa->img_list[mfa->img_count].height = height;
-  
+                        printf("Found image %d: %dx%d, type=%d\n",
+                              mfa->img_count, width, height, is_image);
 
-                        if (!convert_raw_to_image(mfa)){
-                            //free(mfa->img_list[mfa->img_count].data);
+                        // Convert this image immediately after loading its data
+                        if (!convert_raw_to_image(mfa, mfa->img_count)) {
+                            fprintf(stderr, "Error converting image %d\n", mfa->img_count);
                             free(buffer);
                             fclose(file);
                             return false;
                         }
-                        printf("Image %d: %d x %d, size: %zu bytes\n", mfa->img_count, width, height, img_size * is_image);
+
+                        // Only increment after successful processing
                         mfa->img_count++;
-                        if (mfa->img_count >= MAX_IMAGES - 1) {
+                        if (mfa->img_count >= MAX_IMAGES) {
                             fprintf(stderr, "Error: Maximum number of images reached (%d)\n", MAX_IMAGES);
                             free(buffer);
                             fclose(file);
                             return false;
                         }
+
+                        // Skip past this image data in the file
+                        fseek(file, file_offset + i + FILE_CHUNK_SIZE, SEEK_SET);
                     } else {
                         printf("Invalid image size: %d x %d\n", width, height);
                     }
                 }
-                // Move the file pointer to the pixel data
-                fseek(file, file_offset + FILE_CHUNK_SIZE, SEEK_SET);
             }
         }
         file_offset += FILE_CHUNK_SIZE;

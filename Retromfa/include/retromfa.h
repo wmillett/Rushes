@@ -42,6 +42,10 @@
 
 # define FILE_CHUNK_SIZE 1024 // Size of each chunk to read from the file
 
+
+# define SCREEN_WIDTH 800 // Default screen width for the window
+# define SCREEN_HEIGHT 600 // Default screen height for the window
+
 // Structures for handling MFA images
 
 typedef struct mfa_image_s{
@@ -99,8 +103,8 @@ typedef struct s_mfa
 bool read_through_file(t_mfa *mfa);
 
 
-bool convert_raw_to_image(t_mfa *mfa);
-
+bool convert_raw_to_image(t_mfa *mfa, int image_index);
+void display_images(t_mfa *mfa);
 
 
 

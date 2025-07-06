@@ -1,39 +1,60 @@
 #include "retromfa.h"
 
 // Helper function to create a 32-bit RGBA color value
-static uint32_t compose_rgba_color(int alpha, int red, int green, int blue) {
-    return ((alpha & 0xFF) << 24) | ((red & 0xFF) << 16) | ((green & 0xFF) << 8) | (blue & 0xFF);
+static uint32_t create_trgb(int t, int r, int g, int b) {
+    return (t << 24 | r << 16 | g << 8 | b);
 }
 
 // Helper function to set a pixel in the image buffer
-static void place_pixel_in_image(mfa_image_t *img, int x, int y, uint32_t color) {
+static void ft_pixel_put(t_mfa *mfa, int image_index, int x, int y, uint32_t color) {
+    mfa_image_t *img = &mfa->img_list[image_index];
+
     // Check if coordinates are within bounds
     if (x < 0 || x >= img->width || y < 0 || y >= img->height)
         return;
+
+    // Only proceed if we have valid image data
+    if (!img->address || !img->line_size || !img->bpp)
+        return;
+
     // Calculate the memory offset for this pixel
-    int pixel_offset = y * img->line_size + x * (img->bpp / 8);
-    // Write the color value to the image buffer
-    *(uint32_t*)(img->address + pixel_offset) = color;
+    char *dst = img->address + (y * img->line_size + x * (img->bpp / 8));
+    *(unsigned int *)dst = color;
 }
 
 // Function to convert raw image data to a displayable format
-bool convert_raw_to_image(t_mfa *mfa) {
-    // Get the current image from the list
-    printf("---------------------------------------------\n");
-    printf("%d", mfa->img_count);
-    printf("---------------------------------------------\n");
-    return true;
-    mfa_image_t *current_image = &mfa->img_list[mfa->img_count];
+bool convert_raw_to_image(t_mfa *mfa, int image_index) {
+    // Validate the image index
+    if (image_index < 0 || image_index >= mfa->img_count) {
+        fprintf(stderr, "Error: Invalid image index %d (valid range: 0-%d)\n",
+                image_index, mfa->img_count - 1);
+        return false;
+    }
+
+    mfa_image_t *current_image = &mfa->img_list[image_index];
+
+    // Skip if already converted
+    if (current_image->img != NULL) {
+        return true;
+    }
+
     // Extract dimensions for readability
     int image_width = current_image->width;
     int image_height = current_image->height;
 
+    // Check for invalid dimensions
+    if (image_width <= 0 || image_height <= 0 || !current_image->data) {
+        fprintf(stderr, "Error: Invalid image dimensions or missing data for image %d\n", image_index);
+        return false;
+    }
+
     // Create a new image using MiniLibX
     current_image->img = mlx_new_image(mfa->mlx_ptr, image_width, image_height);
     if (!current_image->img) {
-        fprintf(stderr, "Error: Failed to create image with mlx_new_image\n");
+        fprintf(stderr, "Error: Failed to create image with mlx_new_image for image %d\n", image_index);
         return false;
     }
+
     // Temporary variables to match mlx_get_data_addr expectations
     int bits_per_pixel;
     int size_line;
@@ -41,86 +62,110 @@ bool convert_raw_to_image(t_mfa *mfa) {
 
     // Get the image data address
     current_image->address = mlx_get_data_addr(current_image->img,
-                                               &bits_per_pixel,
-                                               &size_line,
-                                               &endian);
+                                              &bits_per_pixel,
+                                              &size_line,
+                                              &endian);
 
     if (!current_image->address) {
-        fprintf(stderr, "Error: Failed to get image data address\n");
+        fprintf(stderr, "Error: Failed to get image data address for image %d\n", image_index);
         return false;
     }
 
     // Store the values in our structure
-    current_image->bpp = (uint32_t)bits_per_pixel;  // Cast to uint32_t if needed
+    current_image->bpp = bits_per_pixel;
     current_image->line_size = size_line;
-    current_image->endian = (bool)endian;  // Cast to bool
+    current_image->endian = (bool)endian;
 
     // Calculate total size of image data
     size_t pixel_count = image_width * image_height;
-    size_t image_data_size = pixel_count * current_image->type; // Each pixel is 2 or 3 bytes
+    size_t image_data_size;
 
-    // Adjust for 24-bit images with padding
-    if (current_image->type == FOUND_24) {
-        image_data_size = (image_width + image_width % 2) * image_height * current_image->type;
-    }
-
-    // Validate image data
-    if (!current_image->data || image_data_size > MAX_IMAGE_SIZE) {
-        fprintf(stderr, "Error: Invalid image data or size exceeds maximum\n");
-        return false;
+    if (current_image->type == FOUND_16) {
+        image_data_size = pixel_count * 2; // 16 bits = 2 bytes per pixel
+    } else { // FOUND_24
+        image_data_size = (image_width + (image_width % 2)) * image_height * 3; // 24 bits = 3 bytes per pixel (with padding)
     }
 
     // Process the raw image data
     size_t color_index = 0;
     for (int row = 0; row < image_height; row++) {
         for (int col = 0; col < image_width; col++) {
-            uint32_t pixel_color = 0;
-            // Process based on color depth
-            if (current_image->type == FOUND_16) {
-                // Process 16-bit color
-                if (color_index + 1 >= image_data_size) {
-                    fprintf(stderr, "Error: Not enough data for 16-bit pixel at (%d, %d)\n", col, row);
-                    return false;
+            uint32_t pixel_color = 0x000000FF; // Default to opaque black
+
+            // Check if we have enough data for this pixel
+            if (color_index + (current_image->type == FOUND_16 ? 2 : 3) <= image_data_size) {
+                if (current_image->type == FOUND_16) {
+                    if (color_index + 1 < image_data_size) {
+                        uint16_t color16 = (current_image->data[color_index]) |
+                                          (current_image->data[color_index + 1] << 8);
+
+                        // Extract 5-bit color components and scale to 8-bit
+                        int r = ((color16 >> 10) & 0x1F) * 8;  // Scale 5-bit to 8-bit
+                        int g = ((color16 >> 5) & 0x1F) * 8;
+                        int b = (color16 & 0x1F) * 8;
+
+                        pixel_color = create_trgb(0, r, g, b);
+                    }
+                    color_index += 2;
+                } else { // FOUND_24
+                    if (color_index + 2 < image_data_size) {
+                        int b = current_image->data[color_index];
+                        int g = current_image->data[color_index + 1];
+                        int r = current_image->data[color_index + 2];
+                        pixel_color = create_trgb(0, r, g, b);
+                    }
+                    color_index += 3;
                 }
-                // Read 16-bit color value (little-endian)
-                uint16_t color16 = (current_image->data[color_index]) |
-                                  (current_image->data[color_index + 1] << 8);
-                // Extract 5-bit color components
-                int red = (color16 >> 10) & 0x1F;    // 5 bits
-                int green = (color16 >> 5) & 0x1F;   // 5 bits
-                int blue = color16 & 0x1F;           // 5 bits
-                // Scale 5-bit colors to 8-bit (0-255) range
-                red = (red * 255) / 31;
-                green = (green * 255) / 31;
-                blue = (blue * 255) / 31;
-                // Create a 32-bit color with alpha set to 0 (fully opaque)
-                pixel_color = compose_rgba_color(0, red, green, blue);
-                color_index += 2; // Move to next 16-bit color
+            } else {
+                // Not enough data for this pixel, advance to next pixel position
+                color_index += (current_image->type == FOUND_16) ? 2 : 3;
             }
-            else if (current_image->type == FOUND_24) {
-                // Process 24-bit color (BGR format)
-                if (color_index + 2 >= image_data_size) {
-                    fprintf(stderr, "Error: Not enough data for 24-bit pixel at (%d, %d)\n", col, row);
-                    return false;
-                }
-                // Extract RGB components (assuming BGR format)
-                int blue = current_image->data[color_index];
-                int green = current_image->data[color_index + 1];
-                int red = current_image->data[color_index + 2];
-                // Create a 32-bit color with alpha set to 0 (fully opaque)
-                pixel_color = compose_rgba_color(0, red, green, blue);
-                color_index += 3; // Move to next 24-bit color
-            }
+
             // Place the pixel color at the correct position in the image
-            place_pixel_in_image(current_image, col, row, pixel_color);
+            ft_pixel_put(mfa, image_index, col, row, pixel_color);
         }
+
         // Handle padding for 24-bit images
         if (current_image->type == FOUND_24) {
-            // Calculate padding bytes needed for 4-byte alignment
             int padding_bytes = (image_width % 2) * 3; // 3 bytes per pixel
             color_index += padding_bytes;
         }
     }
 
     return true;
+}
+
+
+
+// Function to display all loaded images in a grid
+void display_images(t_mfa *mfa) {
+
+    int row_pos = 0;
+    int col_pos = 0;
+    int max_row_height = 0;
+
+    for (int img_index = 0; img_index < mfa->img_count; img_index++) {
+        mfa_image_t *current_image = &mfa->img_list[img_index];
+
+        // Check if we need to move to a new row
+        if (row_pos + current_image->width > SCREEN_WIDTH) {
+            row_pos = 0;
+            col_pos += max_row_height + 5; // Add spacing between rows
+            max_row_height = 0;            // Reset max row height for new row
+        }
+
+        // Update max row height
+        if (current_image->height > max_row_height) {
+            max_row_height = current_image->height;
+        }
+
+        // Display the image if it's within bounds
+        if (col_pos + current_image->height > 0 && col_pos < SCREEN_HEIGHT) {
+            mlx_put_image_to_window(mfa->mlx_ptr, mfa->win_ptr,
+                                  current_image->img, row_pos, col_pos);
+        }
+
+        // Move to next column position
+        row_pos += current_image->width + 5; // Add spacing between images
+    }
 }
