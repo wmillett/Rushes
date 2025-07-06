@@ -95,7 +95,11 @@ typedef struct s_mfa
 
 
 
-
+static bool allocate_image_list(t_mfa *mfa, FILE *file);
+static bool allocate_buffer(unsigned char **buffer, FILE *file);
+static bool validate_image_header(unsigned char *buffer, size_t i, int *is_image);
+static bool extract_image_data(FILE *file, unsigned char *buffer, size_t i, size_t file_offset, t_mfa *mfa, int is_image);
+static bool	read_through_file(t_mfa *mfa);
 bool find_images(t_mfa *mfa);
 void create_mlx_image_from_mfa(t_mfa *mfa, void *mlx_ptr, int index);
 void display_image(t_mfa *mfa, int image_index);

@@ -14,33 +14,10 @@
 //     memcpy(new_buffer + original_size, chunk, chunk_size);
 //     return (new_buffer);
 // }
+  
 
-static bool	read_through_file(t_mfa *mfa)
+static bool	allocate_image_list(t_mfa *mfa, FILE *file)
 {
-	FILE			*file;
-	unsigned char	*buffer;
-	unsigned int	file_offset;
-	size_t			bytes_read;
-	int				is_image;
-	size_t			b;
-	int16_t			width;
-	int16_t			height;
-	size_t			img_size;
-
-	// int16_t header[] = {0x4D, 0x4D, 0x46, 0x32}; // MMF2 header
-	// int16_t header16[] = {0x06, 0x10, 0x0, 0x0};
-		// MMF2 header for 16-bit images
-	// int16_t header24[] = {0x04, 0x10, 0x0, 0x0};
-		// MMF2 header for 24-bit images
-	file = fopen(mfa->filename, READ_BINARY);
-	if (!file)
-	{
-		perror("Error opening file");
-		mfa->content = NULL;
-		mfa->size = 0;
-		return (false);
-	}
-	// 1  allocating mfa->img_list and initializing mfa->imgae_count before the loop
 	mfa->img_list = malloc(sizeof(mfa_image_t) * MAX_IMAGES);
 	if (!mfa->img_list)
 	{
@@ -50,134 +27,115 @@ static bool	read_through_file(t_mfa *mfa)
 	}
 	memset(mfa->img_list, 0, sizeof(mfa_image_t) * MAX_IMAGES);
 	mfa->img_count = 0;
-	buffer = malloc(sizeof(unsigned char) * 1024);
-	if (buffer == NULL)
+	return (true);
+}
+
+static bool	allocate_buffer(unsigned char **buffer, FILE *file)
+{
+	*buffer = malloc(sizeof(unsigned char) * 1024);
+	if (!*buffer)
 	{
 		fprintf(stderr, "Error: Memory allocation failed\n");
 		fclose(file);
 		return (false);
 	}
-	file_offset = 0;
+	return (true);
+}
+
+static bool	validate_image_header(unsigned char *buffer, size_t i, int *is_image)
+{
+	*is_image = 0;
+	if (memcmp(buffer + i, IMAGE_HEADERS[HEADER_16BIT], HEADER_SIZE) == 0)
+		*is_image = FOUND_16;
+	else if (memcmp(buffer + i, IMAGE_HEADERS[HEADER_24BIT], HEADER_SIZE) == 0)
+		*is_image = FOUND_24;
+
+	if (*is_image)
+	{
+		for (size_t j = 0; j < HEADER_SIZE; j++)
+		{
+			if (i + j >= FILE_CHUNK_SIZE || buffer[i + j] != IMAGE_HEADERS[*is_image][j])
+				return (false);
+		}
+	}
+	return (*is_image != 0);
+}
+
+static bool	extract_image_data(FILE *file, unsigned char *buffer, size_t i, size_t file_offset, t_mfa *mfa, int is_image)
+{
+	int16_t width, height;
+	size_t img_size, b;
+
+	fseek(file, file_offset + i - IMAGE_SIZE_OFFSET, SEEK_SET);
+	b = fread(buffer, sizeof(unsigned char), 4, file);
+	if (ferror(file) || b != 4)
+		return (false);
+
+	width = (buffer[0] | (buffer[1] << 8));
+	height = (buffer[2] | (buffer[3] << 8));
+
+	printf("Image size: %d x %d\n", width, height);
+	if (width <= 0 || height <= 0)
+		return (false);
+
+	fseek(file, file_offset + i + IMAGE_PIXEL_OFFSET, SEEK_SET);
+	mfa->img_list[mfa->img_count].type = is_image;
+	img_size = width * height * (is_image == FOUND_24 ? 3 : 2);
+	mfa->img_list[mfa->img_count].data = malloc(img_size);
+	if (!mfa->img_list[mfa->img_count].data)
+		return (false);
+
+	add_garbage(&mfa->img_list[mfa->img_count].data);
+	b = fread(mfa->img_list[mfa->img_count].data, 1, img_size, file);
+	if (ferror(file) || b != img_size)
+		return (false);
+
+	mfa->img_list[mfa->img_count].width = width;
+	mfa->img_list[mfa->img_count].height = height;
+	mfa->img_count++;
+	return (true);
+}
+
+static bool	read_through_file(t_mfa *mfa)
+{
+	FILE *file;
+	unsigned char *buffer;
+	size_t bytes_read;
+	unsigned int file_offset = 0;
+
+	file = fopen(mfa->filename, READ_BINARY);
+	if (!file)
+		return (perror("Error opening file"), mfa->content = NULL, mfa->size = 0, false);
+
+	if (!allocate_image_list(mfa, file) || !allocate_buffer(&buffer, file))
+		return (false);
+
 	while (!feof(file))
 	{
 		bytes_read = fread(buffer, sizeof(unsigned char), 1024, file);
 		if (bytes_read == 0 && ferror(file))
-		{
-			perror("Error reading file");
-			free(buffer);
-			fclose(file);
-			return (false);
-		}
-		// printf("Read %zu bytes from file\n", bytes_read);
-		is_image = 0;
+			return (perror("Error reading file"), free(buffer), fclose(file), false);
+
 		for (size_t i = 0; i + HEADER_SIZE < bytes_read; i++)
 		{
-			is_image = 0;
-			// 2  before we were reading single byte but now it is 4 byte as header is 4 byte long
-			if (memcmp(buffer + i, IMAGE_HEADERS[HEADER_16BIT],
-					HEADER_SIZE) == 0)
-				is_image = FOUND_16;
-			else if (memcmp(buffer + i, IMAGE_HEADERS[HEADER_24BIT],
-					HEADER_SIZE) == 0)
-				is_image = FOUND_24;
-			if (is_image)
-			{
-				for (size_t j = 0; j < HEADER_SIZE; j++)
-				{
-					if (i + j >= FILE_CHUNK_SIZE || buffer[i
-						+ j] != IMAGE_HEADERS[is_image][j])
-					{
-						is_image = false;
-						break ;
-					}
-				}
-				if (!is_image)
-				{
-					printf("Invalid image header at byte %zu\n", i);
-					continue ; // Skip to the next byte if the header is invalid
-				}
-				else
-				{
-					fseek(file, file_offset + i - IMAGE_SIZE_OFFSET, SEEK_SET);
-						// Move the file pointer to the next byte after the header
-					b = fread(buffer, sizeof(unsigned char), 4, file);
-					if (ferror(file) && b == 0)
-					{
-						perror("Error reading file after header");
-						free(buffer);
-						fclose(file);
-						return (false);
-					}
-					// Convert little-endian size to 16-bit integer
-					width = (buffer[0] | (buffer[1] << 8));
-					height = (buffer[2] | (buffer[3] << 8));
-					printf("Image size: %d x %d\n", width, height);
-					if (width > 0 && height > 0)
-					{
-						fseek(file, file_offset + i + IMAGE_PIXEL_OFFSET,
-							SEEK_SET);
-						mfa->img_list[mfa->img_count].type = is_image;
-						img_size = width * height;
-						if (is_image == FOUND_24)
-							img_size = width * height * 3;
-								// (corrected) Adjust for 24-bit images
-						else
-							img_size = width * height * 2;
-								// 1 byte per pixel for 16 bit
-						mfa->img_list[mfa->img_count].data = malloc(img_size);
-						if (!mfa->img_list[mfa->img_count].data)
-						{
-							fprintf(stderr,
-								"Error: Memory allocation failed for image data\n");
-							free(buffer);
-							fclose(file);
-							return (false);
-						}
-						add_garbage(&mfa->img_list[mfa->img_count].data);
-						b = fread(mfa->img_list[mfa->img_count].data, 1, img_size, file);	
-						if (ferror(file) && b == 0)
-						{
-							perror("Error reading image data");
-							free(mfa->img_list[mfa->img_count].data);
-							free(buffer);
-							fclose(file);
-							return (false);
-						}
-						mfa->img_list[mfa->img_count].width = width;
-						mfa->img_list[mfa->img_count].height = height;
-						// img_produce(mfa);
-						// free(mfa->img_list[mfa->img_count].data);
-						mfa->img_count++;
-						if (mfa->img_count >= MAX_IMAGES - 1)
-						{
-							fprintf(stderr,
-								"Error: Maximum number of images reached (%d)\n",
-								MAX_IMAGES);
-							free(buffer);
-							fclose(file);
-							return (false);
-						}
-					}
-					else
-					{
-						printf("Invalid image size: %d x %d at byte %zd\n",
-							width, height, i);
-					}
-				}
-				// Move the file pointer to the pixel data
-				//3. (testing)fseek(file, file_offset + FILE_CHUNK_SIZE, SEEK_SET);
-			}
-			// Example processing: just print the byte value
-			// printf("%02x ", buffer[i]);
+			int is_image;
+			if (!validate_image_header(buffer, i, &is_image))
+				continue;
+			if (!extract_image_data(file, buffer, i, file_offset, mfa, is_image))
+				continue;
+			if (mfa->img_count >= MAX_IMAGES - 1)
+				return (fprintf(stderr, "Error: Maximum number of images reached (%d)\n", MAX_IMAGES), free(buffer), fclose(file), false);
 		}
-		file_offset += FILE_CHUNK_SIZE;
+		file_offset += bytes_read;
+		fseek(file, file_offset, SEEK_SET);
 	}
+
 	free(buffer);
 	fclose(file);
-	printf("File %s read successfully, size: %u bytes\n", mfa->filename,
-		file_offset);
+	printf("File %s read successfully, size: %u bytes\n", mfa->filename, file_offset);
 	return (true);
 }
+
 
 bool	find_images(t_mfa *mfa)
 {
