@@ -19,6 +19,10 @@ static void place_pixel_in_image(mfa_image_t *img, int x, int y, uint32_t color)
 // Function to convert raw image data to a displayable format
 bool convert_raw_to_image(t_mfa *mfa) {
     // Get the current image from the list
+    printf("---------------------------------------------\n");
+    printf("%d", mfa->img_count);
+    printf("---------------------------------------------\n");
+    return true;
     mfa_image_t *current_image = &mfa->img_list[mfa->img_count];
     // Extract dimensions for readability
     int image_width = current_image->width;

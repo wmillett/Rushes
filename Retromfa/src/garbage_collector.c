@@ -84,3 +84,12 @@ void	add_garbage(void *to_add)
 	new_node->mem_next = mem_data()->mem_next;
 	mem_data()->mem_next = new_node;
 }
+
+
+void *tracked_malloc(size_t size) {
+    void *ptr = malloc(size);
+    if (ptr) {
+        add_garbage(ptr);  // Add to garbage collector
+    }
+    return ptr;
+}

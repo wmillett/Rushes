@@ -83,7 +83,7 @@ int main(int argc, char *argv[]) {
 
     for (int i = 1; i < argc; i++) {
         mfa->filename = argv[i];
-        if (find_images(mfa) == false) {
+        if (read_through_file(mfa) == false) {
             all_free(); // Free all allocated memory
             return EXIT_FAILURE;
         }
@@ -112,13 +112,13 @@ int main(int argc, char *argv[]) {
     mlx_key_hook(mfa->win_ptr, key_hook, mfa);
     mlx_loop(mfa->mlx_ptr);
 
-    for (int i = 0; i < mfa->img_count; i++) {
-        mlx_destroy_image(mfa->mlx_ptr, mfa->img_list[i].img);
-        // if (img->data) {
-        //     free(img->data);
-        //     img->data = NULL;
-        // }
-    }
+    // for (int i = 0; i < mfa->img_count; i++) {
+    //     mlx_destroy_image(mfa->mlx_ptr, mfa->img_list[i].img);
+    //     // if (img->data) {
+    //     //     free(img->data);
+    //     //     img->data = NULL;
+    //     // }
+    // }
 
 
 

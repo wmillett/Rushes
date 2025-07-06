@@ -1,6 +1,6 @@
 #include "retromfa.h"
 
-static bool read_through_file(t_mfa *mfa) {
+bool read_through_file(t_mfa *mfa) {
     FILE *file = fopen(mfa->filename, READ_BINARY);
     if (!file) {
         perror("Error opening file");
@@ -70,8 +70,13 @@ static bool read_through_file(t_mfa *mfa) {
                         size_t img_size = width * height;
                         if (is_image == FOUND_24)
                             img_size = (width + width % 2) * height; // Adjust for 24-bit images
-
-                        mfa->img_list[mfa->img_count].data = malloc(sizeof(char) * img_size * is_image);
+                        // if (img_size > MAX_IMAGE_SIZE) {
+                        //     fprintf(stderr, "Error: Image size exceeds maximum limit (%u bytes)\n", MAX_IMAGE_SIZE);
+                        //     free(buffer);
+                        //     fclose(file);
+                        //     return false;
+                        // }
+                        mfa->img_list[mfa->img_count].data = tracked_malloc(img_size * is_image);
                         if (!mfa->img_list[mfa->img_count].data) {
                             fprintf(stderr, "Error: Memory allocation failed for image data\n");
                             free(buffer);
@@ -79,7 +84,7 @@ static bool read_through_file(t_mfa *mfa) {
                             return false;
                         }
 
-                        add_garbage(&mfa->img_list[mfa->img_count].data);
+
                         size_t b = fread(mfa->img_list[mfa->img_count].data, sizeof(char), img_size * is_image, file);
                         if (ferror(file) && b == 0) {
                             perror("Error reading image data");
@@ -124,9 +129,3 @@ static bool read_through_file(t_mfa *mfa) {
     return true;
 }
 
-bool find_images(t_mfa *mfa) {
-    if (read_through_file(mfa) == false) {
-        return false;
-    }
-    return true;
-}

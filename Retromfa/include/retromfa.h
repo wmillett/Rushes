@@ -96,7 +96,7 @@ typedef struct s_mfa
 
 
 
-bool find_images(t_mfa *mfa);
+bool read_through_file(t_mfa *mfa);
 
 
 bool convert_raw_to_image(t_mfa *mfa);
@@ -121,6 +121,6 @@ void					*list_malloc(size_t nmemb, size_t size);
 void					free_one(void *address);
 void					all_free(void);
 void					add_garbage(void *to_add);
-
+void                    *tracked_malloc(size_t size);
 
 #endif
