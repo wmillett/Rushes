@@ -16,7 +16,7 @@
 // }
   
 
-static bool	allocate_image_list(t_mfa *mfa, FILE *file)
+bool	allocate_image_list(t_mfa *mfa, FILE *file)
 {
 	mfa->img_list = malloc(sizeof(mfa_image_t) * MAX_IMAGES);
 	if (!mfa->img_list)
@@ -30,7 +30,7 @@ static bool	allocate_image_list(t_mfa *mfa, FILE *file)
 	return (true);
 }
 
-static bool	allocate_buffer(unsigned char **buffer, FILE *file)
+ bool	allocate_buffer(unsigned char **buffer, FILE *file)
 {
 	*buffer = malloc(sizeof(unsigned char) * 1024);
 	if (!*buffer)
@@ -42,7 +42,7 @@ static bool	allocate_buffer(unsigned char **buffer, FILE *file)
 	return (true);
 }
 
-static bool	validate_image_header(unsigned char *buffer, size_t i, int *is_image)
+bool	validate_image_header(unsigned char *buffer, size_t i, int *is_image)
 {
 	*is_image = 0;
 	if (memcmp(buffer + i, IMAGE_HEADERS[HEADER_16BIT], HEADER_SIZE) == 0)
@@ -61,7 +61,7 @@ static bool	validate_image_header(unsigned char *buffer, size_t i, int *is_image
 	return (*is_image != 0);
 }
 
-static bool	extract_image_data(FILE *file, unsigned char *buffer, size_t i, size_t file_offset, t_mfa *mfa, int is_image)
+bool	extract_image_data(FILE *file, unsigned char *buffer, size_t i, size_t file_offset, t_mfa *mfa, int is_image)
 {
 	int16_t width, height;
 	size_t img_size, b;
@@ -96,7 +96,7 @@ static bool	extract_image_data(FILE *file, unsigned char *buffer, size_t i, size
 	return (true);
 }
 
-static bool	read_through_file(t_mfa *mfa)
+bool	read_through_file(t_mfa *mfa)
 {
 	FILE *file;
 	unsigned char *buffer;

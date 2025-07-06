@@ -1,19 +1,21 @@
-CC = cc
-CFLAGS = -Wall -Wextra -Werror
+CC = gcc
+CFLAGS = -Wall -Wextra -Werror -I. -Iminilibx-linux -I/usr/include -O3
+LFLAGS	=	-Lminilibx-linux -lmlx -L/usr/lib -Iminilibx-linux -lXext -lX11 -lm -lz
 INCLUDES = -Iinclude
 
-SRCS = src/main.c src/retromfa.c
+SRCS = $(wildcard src/*.c)
 OBJS = $(SRCS:src/%.c=obj/%.o)
 TARGET = retromfa
 OBJDIR = obj
 
-#TODO: remove this when the library is ready for use
-
+MFAFILES = $(wildcard assets/MFA/*.mfa)
+TESTFILES = $(wildcard assets/testerror/*)
 
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
-	$(CC) $(CFLAGS) $(INCLUDES) $^ -o $@
+	$(MAKE) -j -C minilibx-linux
+	$(CC) $(CFLAGS) $(INCLUDES) $^ -o $@ $(LFLAGS)
 
 $(OBJDIR)/%.o: src/%.c | $(OBJDIR)
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
@@ -29,8 +31,16 @@ fclean: clean
 
 re: fclean all
 
+testerror: $(TARGET)
+	@echo "Running tests..."
+	./$(TARGET) $(TESTFILES)
+
+testsingle: $(TARGET)
+	@echo "Running single test..."
+	./$(TARGET) assets/testerror/blue.mfa
+
 run: $(TARGET)
-	./$(TARGET)
+	./$(TARGET) $(MFAFILES)
 
 
-.PHONY: all clean fclean re run bonus check-sdl2
+.PHONY: all clean fclean re run testerror testsingle
