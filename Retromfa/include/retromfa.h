@@ -37,7 +37,7 @@
 # define FOUND_24 2 // Flag to indicate a 24-bit image was found
 
 
-# define IMAGE_SIZE_OFFSET -4
+# define IMAGE_SIZE_OFFSET 4
 # define IMAGE_PIXEL_OFFSET 16 // Offset where image data starts in the file
 
 # define FILE_CHUNK_SIZE 1024 // Size of each chunk to read from the file
@@ -99,7 +99,7 @@ typedef struct s_mfa
 bool find_images(t_mfa *mfa);
 
 
-
+bool convert_raw_to_image(t_mfa *mfa);
 
 
 

@@ -9,7 +9,7 @@ static bool read_through_file(t_mfa *mfa) {
         return false;
     }
 
-    unsigned char *buffer = malloc(sizeof(unsigned char) * 1024);
+    unsigned char *buffer = malloc(sizeof(unsigned char) * FILE_CHUNK_SIZE);
     if (buffer == NULL) {
         fprintf(stderr, "Error: Memory allocation failed\n");
         fclose(file);
@@ -18,7 +18,7 @@ static bool read_through_file(t_mfa *mfa) {
 
     unsigned int file_offset = 0;
     while (!feof(file)) {
-        size_t bytes_read = fread(buffer, sizeof(unsigned char), 1024, file);
+        size_t bytes_read = fread(buffer, sizeof(unsigned char), FILE_CHUNK_SIZE, file);
         if (bytes_read == 0 && ferror(file)) {
             perror("Error reading file");
             free(buffer);
@@ -83,7 +83,7 @@ static bool read_through_file(t_mfa *mfa) {
                         size_t b = fread(mfa->img_list[mfa->img_count].data, sizeof(char), img_size * is_image, file);
                         if (ferror(file) && b == 0) {
                             perror("Error reading image data");
-                            free(mfa->img_list[mfa->img_count].data);
+                            //free(mfa->img_list[mfa->img_count].data);
                             free(buffer);
                             fclose(file);
                             return false;
@@ -91,7 +91,14 @@ static bool read_through_file(t_mfa *mfa) {
 
                         mfa->img_list[mfa->img_count].width = width;
                         mfa->img_list[mfa->img_count].height = height;
+  
 
+                        if (!convert_raw_to_image(mfa)){
+                            //free(mfa->img_list[mfa->img_count].data);
+                            free(buffer);
+                            fclose(file);
+                            return false;
+                        }
                         printf("Image %d: %d x %d, size: %zu bytes\n", mfa->img_count, width, height, img_size * is_image);
                         mfa->img_count++;
                         if (mfa->img_count >= MAX_IMAGES - 1) {
