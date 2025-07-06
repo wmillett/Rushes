@@ -96,7 +96,7 @@ static bool read_through_file(t_mfa *mfa){
                             img_size = (width + width % 2) * height; // Adjust for 24-bit images
 
 
-						mfa->img_list[mfa->img_count]->data = list_malloc(sizeof(char) * img_size * mfa->img_list[mfa->img_count].type);
+						mfa->img_list[mfa->img_count].data = malloc( sizeof(char) * img_size * mfa->img_list[mfa->img_count].type);
 						if (!mfa->img_list[mfa->img_count].data) {
                             fprintf(stderr, "Error: Memory allocation failed for image data\n");
                             free(buffer);
@@ -121,7 +121,7 @@ static bool read_through_file(t_mfa *mfa){
 
 
 
-						img_produce(mfa);
+						//img_produce(mfa);
 
 						//free(mfa->img_list[mfa->img_count].data);
 						mfa->img_count++;
