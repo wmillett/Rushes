@@ -44,11 +44,11 @@
 
 // Structures for handling MFA images
 
-typedef struct {
+typedef struct mfa_image_s{
     int16_t width;
     int16_t height;
     uint32_t bpp;         
-    uint8_t *data;        
+    unsigned char *data;
     void *img;
     int type;
     bool endian; // 0 for little-endian, 1 for big-endian
@@ -90,7 +90,7 @@ typedef struct s_mfa
     char    *filename; // Name of the MFA file
     char    *content; // Content of the MFA file
     size_t  size; // Size of the content
-    mfa_image_t    img_list[1000]; // Array to hold images
+    mfa_image_t    *img_list; // 
 }				t_mfa;
 
 

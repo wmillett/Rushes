@@ -71,6 +71,16 @@ int main(int argc, char *argv[]) {
     mfa->filename = NULL;
     mfa->content = NULL;
     mfa->size = 0;
+    mfa->img_list = list_malloc(MAX_IMAGES, sizeof(mfa_image_t));
+    if (!mfa->img_list) {
+        fprintf(stderr, "Error: Failed to allocate memory for image list\n");
+        free(mfa);
+        return EXIT_FAILURE;
+    }
+
+
+
+
     for (int i = 1; i < argc; i++) {
         mfa->filename = argv[i];
         if (find_images(mfa) == false) {
