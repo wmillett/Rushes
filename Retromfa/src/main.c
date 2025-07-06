@@ -54,30 +54,47 @@ int main(int argc, char *argv[]) {
 
     for (int i = 1; i < argc; i++) {
         if (!check_files(argv[i])) {
-            //fprintf(stderr, "Error: File %s does not have .mfa extension\n", argv[i]);
             return EXIT_FAILURE;
         }
     }
 
-    // Setup mlx
 
     t_mfa *mfa = list_malloc(1, sizeof(t_mfa));
     if (!mfa) {
         fprintf(stderr, "Error: Failed to allocate memory for t_mfa\n");
         return EXIT_FAILURE;
     }
+
+    mfa->img_count = 0;
+    mfa->mlx_ptr = NULL;
+    mfa->win_ptr = NULL;
+    mfa->filename_index = NULL;
+    mfa->content = NULL;
+    mfa->size = 0;
+    for (int i = 1; i < argc; i++) {
+        mfa->filename_index = argv[i];
+        if (find_images(mfa, argv[i]) == false) {
+            all_free(); // Free all allocated memory
+            return EXIT_FAILURE;
+        }
+    }
+    
+        // printf("DEBUG.\n");
+        // return EXIT_SUCCESS; 
+
+    // Setup mlx
+
     
     mfa->mlx_ptr = mlx_init();
-    if (!mfa->mlx_ptr) {
+    if (mfa->mlx_ptr == NULL) {
+        exit_mlx(mfa);
         fprintf(stderr, "Error: Failed to initialize MLX\n");
-        free(mfa);
         return EXIT_FAILURE;
     }
     mfa->win_ptr = mlx_new_window(mfa->mlx_ptr, 800, 600, "RetroMFA Viewer");
-    if (!mfa->win_ptr) {
+    if (mfa->win_ptr == NULL) {
         fprintf(stderr, "Error: Failed to create MLX window\n");
         exit_mlx(mfa);
-        free(mfa);
         return EXIT_FAILURE;
     }
     
@@ -94,8 +111,6 @@ int main(int argc, char *argv[]) {
     }
 
     exit_mlx(mfa);
-    all_free(); // Free all allocated memory
-
     // // Process each MFA file
     // printf("Processing %d MFA file(s)...\n", argc - 1);
     // for (int i = 1; i < argc; i++) {
@@ -106,6 +121,6 @@ int main(int argc, char *argv[]) {
     //     }
     // }
 
-    printf("\nAll files processed successfully!\n");
+    printf("\nExit Success\n");
     return EXIT_SUCCESS;
 }
